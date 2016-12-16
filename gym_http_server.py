@@ -6,6 +6,7 @@ import numpy as np
 import six
 import argparse
 import sys
+from osim.env import ArmEnv
 
 import logging
 logger = logging.getLogger('werkzeug')
@@ -41,7 +42,12 @@ class Envs(object):
 
     def create(self, env_id):
         try:
-            env = gym.make(env_id)
+            osim_envs = ['Arm']
+            if env_id in osim_envs:
+                env = ArmEnv()
+            else:
+                env = gym.make(env_id)
+            
         except gym.error.Error:
             raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
 
