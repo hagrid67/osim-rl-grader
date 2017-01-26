@@ -19,7 +19,7 @@ Getting started
 
 To start the server from the command line, run this:
 
-    python gym_http_server.py -p 80 -l [IP]
+    python gym_http_server.py -p 80 -l 127.0.0.1
 
 API specification
 ============
