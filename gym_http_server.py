@@ -11,6 +11,8 @@ from osim.env import ArmEnv
 from gym.wrappers.time_limit import TimeLimit
 from gym import error
 
+from localsettings import CROWDAI_ADMIN
+
 import logging
 logger = logging.getLogger('werkzeug')
 logger.setLevel(logging.ERROR)
@@ -68,7 +70,7 @@ class Envs(object):
         except KeyError:
             raise InvalidUsage('Instance_id {} unknown'.format(instance_id))
 
-    def create(self, env_id):
+    def create(self, env_id, token):
         try:
             osim_envs = ['Arm']
             if env_id in osim_envs:
@@ -79,7 +81,7 @@ class Envs(object):
         except gym.error.Error:
             raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
 
-        instance_id = str(uuid.uuid4().hex)[:self.id_len]
+        instance_id = token #str(uuid.uuid4().hex)[:self.id_len]
         self.envs[instance_id] = env
         return instance_id
 
@@ -161,7 +163,8 @@ class Envs(object):
         env = self._lookup_env(instance_id)
 #        env.monitor.close()
         print("CLOSED %s, %f" % (instance_id, env.total))
-        pass
+        print("Submitting to crowdAI.org as %s..." % CROWDAI_ADMIN)
+        return env.total
 
     def env_close(self, instance_id):
         env = self._lookup_env(instance_id)
@@ -228,8 +231,12 @@ def env_create():
         manipulated
     """
     env_id = get_required_param(request.get_json(), 'env_id')
-    instance_id = envs.create(env_id)
-    return jsonify(instance_id = instance_id)
+    token = get_required_param(request.get_json(), 'token')
+
+    # TODO: CHECK IF THE TOKEN IS OK
+
+    instance_id = envs.create(env_id, token)
+    return jsonify(instance_id = token)
 
 @app.route('/v1/envs/', methods=['GET'])
 def env_list_all():
@@ -381,8 +388,8 @@ def env_monitor_close(instance_id):
         - instance_id: a short identifier (such as '3c657dbc')
           for the environment instance
     """
-    envs.monitor_close(instance_id)
-    return ('', 204)
+    total = envs.monitor_close(instance_id)
+    return ('{ "reward": %f }' % total, 200)
 
 @app.route('/v1/envs/<instance_id>/close/', methods=['POST'])
 def env_close(instance_id):
