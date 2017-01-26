@@ -6,11 +6,39 @@ import numpy as np
 import six
 import argparse
 import sys
+from gym.wrappers.monitoring import Monitor, _Monitor
 from osim.env import ArmEnv
+from gym.wrappers.time_limit import TimeLimit
+from gym import error
 
 import logging
 logger = logging.getLogger('werkzeug')
 logger.setLevel(logging.ERROR)
+
+class _ChallengeMonitor(_Monitor):
+    total = 0.0
+    def __init__(self, *args, **kwargs):
+        super(_ChallengeMonitor, self).__init__(*args, **kwargs)
+
+    def _step(self, *args, **kwargs):
+        observation, reward, done, info = super(_ChallengeMonitor, self)._step(*args, **kwargs)
+        self.total = self.total + reward
+        return observation, reward, done, info
+
+    def _reset(self, *args, **kwargs):
+        observation = super(_ChallengeMonitor, self)._reset(*args, **kwargs)
+        self.total = 0.0
+        return observation
+
+
+def ChallengeMonitor(env=None, directory=None, video_callable=None, force=False, resume=False,
+            write_upon_reset=False, uid=None, mode=None):
+    if not isinstance(env, gym.Env):
+        raise error.Error("Monitor decorator syntax is deprecated as of 12/28/2016. Replace your call to `env = gym.wrappers.Monitor(directory)(env)` with `env = gym.wrappers.Monitor(env, directory)`")
+
+    return _ChallengeMonitor(TimeLimit(env, max_episode_steps=env.spec.timestep_limit), directory, video_callable, force, resume,
+write_upon_reset, uid, mode)
+
 
 ########## Container for environments ##########
 class Envs(object):
@@ -127,11 +155,13 @@ class Envs(object):
             v_c = lambda count: False
         else:
             v_c = lambda count: count % video_callable == 0
-        env.monitor.start(directory, force=force, resume=resume, video_callable=v_c)
+        self.envs[instance_id] = ChallengeMonitor(env, directory, force=force, resume=resume, video_callable=v_c)
 
     def monitor_close(self, instance_id):
         env = self._lookup_env(instance_id)
-        env.monitor.close()
+#        env.monitor.close()
+        print("CLOSED %s, %f" % (instance_id, env.total))
+        pass
 
     def env_close(self, instance_id):
         env = self._lookup_env(instance_id)
@@ -338,6 +368,7 @@ def env_monitor_start(instance_id):
     force = get_optional_param(j, 'force', False)
     resume = get_optional_param(j, 'resume', False)
     video_callable = get_optional_param(j, 'video_callable', False)
+    #envs.envs['instance_id'] = Monitor(envs.envs['instance_id'], directory)
     envs.monitor_start(instance_id, directory, force, resume, video_callable)
     return ('', 204)
 
