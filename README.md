@@ -11,6 +11,8 @@ Installation
     conda install -c conda-forge lapack
     conda install flask git
     pip install git+https://github.com/kidzik/osim-rl.git
+    git clone https://github.com/kidzik/osim-rl-grader.git
+    cd osim-rl-grader
 
 Getting started
 ============
