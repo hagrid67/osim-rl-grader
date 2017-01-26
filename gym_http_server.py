@@ -163,7 +163,7 @@ class Envs(object):
         env = self._lookup_env(instance_id)
 #        env.monitor.close()
         print("CLOSED %s, %f" % (instance_id, env.total))
-        print("Submitting to crowdAI.org as %s..." % CROWDAI_ADMIN)
+        # TODO print("Submitting to crowdAI.org as %s..." % CROWDAI_ADMIN)
         return env.total
 
     def env_close(self, instance_id):
@@ -233,12 +233,13 @@ def env_create():
     env_id = get_required_param(request.get_json(), 'env_id')
     token = get_required_param(request.get_json(), 'token')
 
-    # TODO: CHECK IF THE TOKEN IS OK
+    # TODO: CHECK IF THE TOKEN IS OK AND IF THE USER IS ALLOWED TO SUBMIT
 
     instance_id = envs.create(env_id, token)
+ 
     return jsonify(instance_id = token)
 
-@app.route('/v1/envs/', methods=['GET'])
+#@app.route('/v1/envs/', methods=['GET'])
 def env_list_all():
     """
     List all environments running on the server
@@ -289,7 +290,7 @@ def env_step(instance_id):
     return jsonify(observation = obs_jsonable,
                     reward = reward, done = done, info = info)
 
-@app.route('/v1/envs/<instance_id>/action_space/', methods=['GET'])
+#@app.route('/v1/envs/<instance_id>/action_space/', methods=['GET'])
 def env_action_space_info(instance_id):
     """
     Get information (name and dimensions/bounds) of the env's
@@ -304,9 +305,9 @@ def env_action_space_info(instance_id):
     space to space
     """
     info = envs.get_action_space_info(instance_id)
-    return jsonify(info = info)
+    return jsonify(info = info)                                                          5
 
-@app.route('/v1/envs/<instance_id>/action_space/sample', methods=['GET'])
+#@app.route('/v1/envs/<instance_id>/action_space/sample', methods=['GET'])
 def env_action_space_sample(instance_id):
     """
     Get a sample from the env's action_space
@@ -321,7 +322,7 @@ def env_action_space_sample(instance_id):
     action = envs.get_action_space_sample(instance_id)
     return jsonify(action = action)
 
-@app.route('/v1/envs/<instance_id>/action_space/contains/<x>', methods=['GET'])
+#@app.route('/v1/envs/<instance_id>/action_space/contains/<x>', methods=['GET'])
 def env_action_space_contains(instance_id, x):
     """
     Assess that value is a member of the env's action_space
@@ -337,7 +338,7 @@ def env_action_space_contains(instance_id, x):
     member = envs.get_action_space_contains(instance_id, x)
     return jsonify(member = member)
 
-@app.route('/v1/envs/<instance_id>/observation_space/', methods=['GET'])
+#@app.route('/v1/envs/<instance_id>/observation_space/', methods=['GET'])
 def env_observation_space_info(instance_id):
     """
     Get information (name and dimensions/bounds) of the env's
@@ -403,7 +404,7 @@ def env_close(instance_id):
     envs.env_close(instance_id)
     return ('', 204)
 
-@app.route('/v1/upload/', methods=['POST'])
+#@app.route('/v1/upload/', methods=['POST'])
 def upload():
     """
     Upload the results of training (as automatically recorded by
@@ -429,7 +430,7 @@ def upload():
     except gym.error.AuthenticationError:
         raise InvalidUsage('You must provide an OpenAI Gym API key')
 
-@app.route('/v1/shutdown/', methods=['POST'])
+#@app.route('/v1/shutdown/', methods=['POST'])
 def shutdown():
     """ Request a server shutdown - currently used by the integration tests to repeatedly create and destroy fresh copies of the server running in a separate thread"""
     f = request.environ.get('werkzeug.server.shutdown')
