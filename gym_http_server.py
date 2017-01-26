@@ -11,8 +11,6 @@ from osim.env import ArmEnv
 from gym.wrappers.time_limit import TimeLimit
 from gym import error
 
-from localsettings import CROWDAI_ADMIN
-
 import logging
 logger = logging.getLogger('werkzeug')
 logger.setLevel(logging.ERROR)
@@ -305,7 +303,7 @@ def env_action_space_info(instance_id):
     space to space
     """
     info = envs.get_action_space_info(instance_id)
-    return jsonify(info = info)                                                          5
+    return jsonify(info = info)
 
 #@app.route('/v1/envs/<instance_id>/action_space/sample', methods=['GET'])
 def env_action_space_sample(instance_id):
