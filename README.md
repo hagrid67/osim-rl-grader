@@ -26,22 +26,21 @@ API specification
       * Create an instance of the specified environment
       * param: `env_id` -- gym environment ID string, such as 'CartPole-v0'
       * param: `token` -- token from crowdAI
-      * returns: `instance_id` -- a short identifier (such as '3c657dbc')
-	    for the created environment instance. The instance_id is
+      * returns: `token` -- a short identifier (such as '3c657dbc')
+	    for the created environment instance. The token is
         used in future API calls to identify the environment to be
         manipulated
 
   * POST `/v1/envs/<token>/reset/`
       * Reset the state of the environment and return an initial
         observation.
-      * param: `instance_id` -- a short identifier (such as '3c657dbc')
+      * param: `token` -- token from crowdAI
         for the environment instance
       * returns: `observation` -- the initial observation of the space
     
   * POST `/v1/envs/<token>/step/`
       *  Step though an environment using an action.
-      * param: `instance_id` -- a short identifier (such as '3c657dbc')
-        for the environment instance
+      * param: `token` -- token from crowdAI
 	  * param: `action` -- an action to take in the environment
       * returns: `observation` -- agent's observation of the current
         environment
@@ -51,8 +50,7 @@ API specification
 
   * POST `/v1/envs/<token>/monitor/start/`
       * Start monitoring
-      * param: `instance_id` -- a short identifier (such as '3c657dbc')
-        for the environment instance  
+      * param: `token` -- token from crowdAI
       * param: `force` (default=False) -- Clear out existing training
         data from this directory (by deleting every file
         prefixed with "openaigym.")
@@ -64,6 +62,4 @@ API specification
 
   * POST `/v1/envs/<token>/monitor/close/`
       * Flush all monitor data to disk
-      * param: `instance_id` -- a short identifier (such as '3c657dbc')
-        for the environment instance 
-	
+      * param: `token` -- token from crowdAI	
