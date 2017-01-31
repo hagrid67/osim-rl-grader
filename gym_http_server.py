@@ -6,10 +6,14 @@ import numpy as np
 import six
 import argparse
 import sys
+import requests
 from gym.wrappers.monitoring import Monitor, _Monitor
-from osim.env import ArmEnv
+from osim.env import ArmEnv, GaitEnv
 from gym.wrappers.time_limit import TimeLimit
 from gym import error
+
+from localsettings import CROWDAI_TOKEN
+from localsettings import CROWDAI_URL
 
 import logging
 logger = logging.getLogger('werkzeug')
@@ -70,11 +74,12 @@ class Envs(object):
 
     def create(self, env_id, token):
         try:
-            osim_envs = ['Arm']
-            if env_id in osim_envs:
-                env = ArmEnv()
+            osim_envs = {#'Arm': ArmEnv,
+                         'Gait': GaitEnv}
+            if env_id in osim_envs.keys():
+                env = osim_envs[env_id](visualize=False)
             else:
-                env = gym.make(env_id)
+                raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
             
         except gym.error.Error:
             raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
@@ -161,7 +166,12 @@ class Envs(object):
         env = self._lookup_env(instance_id)
 #        env.monitor.close()
         print("CLOSED %s, %f" % (instance_id, env.total))
-        # TODO print("Submitting to crowdAI.org as %s..." % CROWDAI_ADMIN)
+        print("Submitting to crowdAI.org as Stanford...")
+
+        headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
+        r = requests.put(CROWDAI_URL + "%s?challenge_id=6&score=%f&grading_status=graded" % (instance_id, env.total), headers=headers)
+        print(r.text)
+        
         return env.total
 
     def env_close(self, instance_id):
@@ -214,6 +224,17 @@ def handle_invalid_usage(error):
     response.status_code = error.status_code
     return response
 
+import httplib
+
+def patch_send():
+    old_send= httplib.HTTPConnection.send
+    def new_send( self, data ):
+        print data
+        return old_send(self, data) #return is not necessary, but never hurts, in case the library is changed
+    httplib.HTTPConnection.send= new_send
+
+#patch_send()
+
 ########## API route definitions ##########
 @app.route('/v1/envs/', methods=['POST'])
 def env_create():
@@ -231,10 +252,12 @@ def env_create():
     env_id = get_required_param(request.get_json(), 'env_id')
     token = get_required_param(request.get_json(), 'token')
 
-    # TODO: CHECK IF THE TOKEN IS OK AND IF THE USER IS ALLOWED TO SUBMIT
-
     instance_id = envs.create(env_id, token)
  
+    headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
+    r = requests.get(CROWDAI_URL + instance_id, headers=headers)
+    print(r.text)
+
     return jsonify(instance_id = token)
 
 #@app.route('/v1/envs/', methods=['GET'])
