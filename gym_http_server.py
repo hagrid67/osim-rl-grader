@@ -12,8 +12,7 @@ from osim.env import ArmEnv, GaitEnv
 from gym.wrappers.time_limit import TimeLimit
 from gym import error
 
-from localsettings import CROWDAI_TOKEN
-from localsettings import CROWDAI_URL
+from localsettings import CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_ID
 
 import logging
 logger = logging.getLogger('werkzeug')
@@ -85,6 +84,11 @@ class Envs(object):
             raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
 
         instance_id = token #str(uuid.uuid4().hex)[:self.id_len]
+        # TODO: that's an ugly way to control the program...
+        try:
+            self.env_close(instance_id)
+        except:
+            pass
         self.envs[instance_id] = env
         return instance_id
 
@@ -164,13 +168,13 @@ class Envs(object):
 
     def monitor_close(self, instance_id):
         env = self._lookup_env(instance_id)
-#        env.monitor.close()
         print("CLOSED %s, %f" % (instance_id, env.total))
         print("Submitting to crowdAI.org as Stanford...")
 
         headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
-        r = requests.put(CROWDAI_URL + "%s?challenge_id=6&score=%f&grading_status=graded" % (instance_id, env.total), headers=headers)
-        print(r.text)
+        r = requests.put(CROWDAI_URL + "%s?challenge_id=%d&score=%f&grading_status=graded" % (instance_id, CROWDAI_CHALLENGE_ID, env.total), headers=headers)
+        if r.status_code != 202:
+            return None
         
         return env.total
 
@@ -256,9 +260,11 @@ def env_create():
  
     headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
     r = requests.get(CROWDAI_URL + instance_id, headers=headers)
-    print(r.text)
 
-    return jsonify(instance_id = token)
+    response = jsonify(instance_id = token)
+    response.status_code = r.status_code
+
+    return response    
 
 #@app.route('/v1/envs/', methods=['GET'])
 def env_list_all():
@@ -411,7 +417,12 @@ def env_monitor_close(instance_id):
           for the environment instance
     """
     total = envs.monitor_close(instance_id)
-    return ('{ "reward": %f }' % total, 200)
+    response = jsonify(reward = total)
+    if total == None:
+        response.status_code = 400
+    else:
+        response.status_code = 200
+    return response
 
 @app.route('/v1/envs/<instance_id>/close/', methods=['POST'])
 def env_close(instance_id):
