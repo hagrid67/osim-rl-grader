@@ -257,7 +257,6 @@ def env_create():
     token = get_required_param(request.get_json(), 'token')
 
     instance_id = envs.create(env_id, token)
- 
     headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
     r = requests.get(CROWDAI_URL + instance_id, headers=headers)
 
