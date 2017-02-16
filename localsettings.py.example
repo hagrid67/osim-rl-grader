@@ -1,0 +1,6 @@
+## Local Settings for the osim-rl-grader
+
+CROWDAI_URL="URL for the CrowdAI Instance"
+CROWDAI_CHALLENGE_ID="Challenge ID of the corresponding challenge"
+CROWDAI_TOKEN="Authentication Token provided by CrowdAI"
+

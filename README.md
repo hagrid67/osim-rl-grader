@@ -13,7 +13,10 @@ Installation
     pip install git+https://github.com/kidzik/osim-rl.git
     git clone https://github.com/kidzik/osim-rl-grader.git
     cd osim-rl-grader
-
+    cp localsettings.py.example localsettings.py
+    # Now shoot up your favourite editor, open localsettings.py and
+    # fill in the details about the associated CrowdAI Server and 
+    # the ChallengeID and the Grader Authentication Token.
 Getting started
 ============
 
