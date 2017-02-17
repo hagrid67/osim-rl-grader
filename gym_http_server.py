@@ -108,7 +108,7 @@ class Envs(object):
         except gym.error.Error:
             raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
 
-        instance_id = token #str(uuid.uuid4().hex)[:self.id_len]
+        instance_id = token #+ "___" + str(uuid.uuid4().hex)[:10]
         # TODO: that's an ugly way to control the program...
         try:
             self.env_close(instance_id)
