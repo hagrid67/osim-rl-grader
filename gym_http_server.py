@@ -35,6 +35,10 @@ def setVariable(variable_name, variable_value):
     my_server = redis.Redis(connection_pool=POOL)
     my_server.set(variable_name, variable_value)
 
+def rPush(key, value):
+    my_server = redis.Redis(connection_pool=POOL)
+    my_server.rpush(key, value)
+
 """
     Redis Connection Pool Helpers End
 """
@@ -111,6 +115,13 @@ class Envs(object):
         except:
             pass
         self.envs[instance_id] = env
+
+        # Start the relevant data-queues for actions, observations and rewards
+        # for the said instance id
+        rPush("CROWDAI::SUBMISSION::%s::action"%(instance_id), "start")
+        rPush("CROWDAI::SUBMISSION::%s::observation"%(instance_id), "start")
+        rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "start")
+
         return instance_id
 
     def list_all(self):
@@ -119,6 +130,7 @@ class Envs(object):
     def reset(self, instance_id):
         env = self._lookup_env(instance_id)
         obs = env.reset()
+        rPush("CROWDAI::SUBMISSION::%s::observation"%(instance_id), obs.tolist())
         return env.observation_space.to_jsonable(obs)
 
     def step(self, instance_id, action, render):
@@ -131,6 +143,10 @@ class Envs(object):
             env.render()
         [observation, reward, done, info] = env.step(nice_action)
         obs_jsonable = env.observation_space.to_jsonable(observation)
+
+        rPush("CROWDAI::SUBMISSION::%s::action"%(instance_id), nice_action.tolist())
+        rPush("CROWDAI::SUBMISSION::%s::observation"%(instance_id), obs_jsonable.tolist())
+        rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), str(reward))
         return [obs_jsonable, reward, done, info]
 
     def get_action_space_contains(self, instance_id, x):
@@ -189,6 +205,10 @@ class Envs(object):
 
     def monitor_close(self, instance_id):
         env = self._lookup_env(instance_id)
+        rPush("CROWDAI::SUBMISSION::%s::action"%(instance_id), "close")
+        rPush("CROWDAI::SUBMISSION::%s::observation"%(instance_id), "close")
+        rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "close")
+
         print("CLOSED %s, %f" % (instance_id, env.total))
         print("Submitting to crowdAI.org as Stanford...")
 
@@ -197,6 +217,9 @@ class Envs(object):
         if r.status_code != 202:
             return None
 
+        rPush("CROWDAI::SUBMITTED_Q", instance_id)
+        ## TO-DO :: Store instance_id -> submission_id mapping in a hash
+        
         return env.total
 
     def env_close(self, instance_id):
