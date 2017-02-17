@@ -118,8 +118,8 @@ class Envs(object):
 
         # Start the relevant data-queues for actions, observations and rewards
         # for the said instance id
-        rPush("CROWDAI::SUBMISSION::%s::action"%(instance_id), "start")
-        rPush("CROWDAI::SUBMISSION::%s::observation"%(instance_id), "start")
+        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "start")
+        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "start")
         rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "start")
 
         return instance_id
@@ -130,7 +130,7 @@ class Envs(object):
     def reset(self, instance_id):
         env = self._lookup_env(instance_id)
         obs = env.reset()
-        rPush("CROWDAI::SUBMISSION::%s::observation"%(instance_id), obs.tolist())
+        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id),str(obs))
         return env.observation_space.to_jsonable(obs)
 
     def step(self, instance_id, action, render):
@@ -144,8 +144,8 @@ class Envs(object):
         [observation, reward, done, info] = env.step(nice_action)
         obs_jsonable = env.observation_space.to_jsonable(observation)
 
-        rPush("CROWDAI::SUBMISSION::%s::action"%(instance_id), nice_action.tolist())
-        rPush("CROWDAI::SUBMISSION::%s::observation"%(instance_id), obs_jsonable.tolist())
+        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), str(nice_action.tolist()))
+        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), str(obs_jsonable))
         rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), str(reward))
         return [obs_jsonable, reward, done, info]
 
@@ -205,8 +205,8 @@ class Envs(object):
 
     def monitor_close(self, instance_id):
         env = self._lookup_env(instance_id)
-        rPush("CROWDAI::SUBMISSION::%s::action"%(instance_id), "close")
-        rPush("CROWDAI::SUBMISSION::%s::observation"%(instance_id), "close")
+        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "close")
+        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "close")
         rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "close")
 
         print("CLOSED %s, %f" % (instance_id, env.total))
@@ -219,7 +219,7 @@ class Envs(object):
 
         rPush("CROWDAI::SUBMITTED_Q", instance_id)
         ## TO-DO :: Store instance_id -> submission_id mapping in a hash
-        
+
         return env.total
 
     def env_close(self, instance_id):
