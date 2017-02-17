@@ -13,10 +13,31 @@ from gym.wrappers.time_limit import TimeLimit
 from gym import error
 
 from localsettings import CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_ID
+from localsettings import REDIS_HOST, REDIS_PORT
+
+import redis
 
 import logging
 logger = logging.getLogger('werkzeug')
 logger.setLevel(logging.ERROR)
+
+"""
+    Redis Conneciton Pool Helpers
+"""
+POOL = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, db=0)
+
+def getVariable(variable_name):
+    my_server = redis.Redis(connection_pool=POOL)
+    response = my_server.get(variable_name)
+    return response
+
+def setVariable(variable_name, variable_value):
+    my_server = redis.Redis(connection_pool=POOL)
+    my_server.set(variable_name, variable_value)
+
+"""
+    Redis Connection Pool Helpers End
+"""
 
 class _ChallengeMonitor(_Monitor):
     total = 0.0
@@ -79,7 +100,7 @@ class Envs(object):
                 env = osim_envs[env_id](visualize=False)
             else:
                 raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
-            
+
         except gym.error.Error:
             raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
 
@@ -175,7 +196,7 @@ class Envs(object):
         r = requests.put(CROWDAI_URL + "%s?challenge_id=%d&score=%f&grading_status=graded" % (instance_id, CROWDAI_CHALLENGE_ID, env.total), headers=headers)
         if r.status_code != 202:
             return None
-        
+
         return env.total
 
     def env_close(self, instance_id):
@@ -263,7 +284,7 @@ def env_create():
     response = jsonify(instance_id = token)
     response.status_code = r.status_code
 
-    return response    
+    return response
 
 #@app.route('/v1/envs/', methods=['GET'])
 def env_list_all():
@@ -344,7 +365,7 @@ def env_action_space_sample(instance_id):
     Returns:
 
     	- action: a randomly sampled element belonging to the action_space
-    """  
+    """
     action = envs.get_action_space_sample(instance_id)
     return jsonify(action = action)
 
@@ -352,14 +373,14 @@ def env_action_space_sample(instance_id):
 def env_action_space_contains(instance_id, x):
     """
     Assess that value is a member of the env's action_space
-    
+
     Parameters:
         - instance_id: a short identifier (such as '3c657dbc')
         for the environment instance
 	- x: the value to be checked as member
     Returns:
         - member: whether the value passed as parameter belongs to the action_space
-    """  
+    """
 
     member = envs.get_action_space_contains(instance_id, x)
     return jsonify(member = member)

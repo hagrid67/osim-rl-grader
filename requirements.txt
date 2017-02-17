@@ -3,3 +3,4 @@ numpy==1.11.1rc1
 gym==0.1.7
 requests==2.11.0
 nose2==0.6.5
+redis==2.10.5
