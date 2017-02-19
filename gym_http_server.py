@@ -16,6 +16,8 @@ from localsettings import CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_ID
 from localsettings import REDIS_HOST, REDIS_PORT
 
 import redis
+from rq import Queue
+
 
 import logging
 logger = logging.getLogger('werkzeug')
@@ -25,15 +27,11 @@ logger.setLevel(logging.ERROR)
     Redis Conneciton Pool Helpers
 """
 POOL = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, db=0)
+Q = Queue(connection=redis.Redis(host=REDIS_HOST, port=REDIS_PORT))
 
-def getVariable(variable_name):
-    my_server = redis.Redis(connection_pool=POOL)
-    response = my_server.get(variable_name)
-    return response
 
-def setVariable(variable_name, variable_value):
-    my_server = redis.Redis(connection_pool=POOL)
-    my_server.set(variable_name, variable_value)
+def worker(submission_id):
+    print "Processing : ", submission_id
 
 def rPush(key, value):
     my_server = redis.Redis(connection_pool=POOL)
@@ -218,6 +216,7 @@ class Envs(object):
             return None
 
         rPush("CROWDAI::SUBMITTED_Q", instance_id)
+        Q.enque(worker, instance_id)
         ## TO-DO :: Store instance_id -> submission_id mapping in a hash
 
         return env.total
