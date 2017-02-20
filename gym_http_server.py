@@ -15,6 +15,8 @@ from gym import error
 from localsettings import CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_ID
 from localsettings import REDIS_HOST, REDIS_PORT
 
+from crowdai_worker import worker
+
 import redis
 from rq import Queue
 
@@ -28,10 +30,6 @@ logger.setLevel(logging.ERROR)
 """
 POOL = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, db=0)
 Q = Queue(connection=redis.Redis(host=REDIS_HOST, port=REDIS_PORT))
-
-
-def worker(submission_id):
-    print "Processing : ", submission_id
 
 def rPush(key, value):
     my_server = redis.Redis(connection_pool=POOL)
@@ -216,7 +214,7 @@ class Envs(object):
             return None
 
         rPush("CROWDAI::SUBMITTED_Q", instance_id)
-        Q.enque(worker, instance_id)
+        Q.enqueue(worker, instance_id)
         ## TO-DO :: Store instance_id -> submission_id mapping in a hash
 
         return env.total
