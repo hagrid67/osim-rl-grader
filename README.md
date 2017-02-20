@@ -5,7 +5,7 @@ This project provides a grader for the RL task in crowdAI. It is based on openai
 
 Installation
 ============
-	
+
     conda create -n opensim-rl -c kidzik opensim
     activate opensim-rl
     conda install -c conda-forge lapack
@@ -15,8 +15,14 @@ Installation
     cd osim-rl-grader
     cp localsettings.py.example localsettings.py
     # Now shoot up your favourite editor, open localsettings.py and
-    # fill in the details about the associated CrowdAI Server and 
+    # fill in the details about the associated CrowdAI Server and
     # the ChallengeID and the Grader Authentication Token.
+
+		## Instructions for headless simulations
+		sudo apt-get install xpra
+		xpra start :7
+		# Now configure DISPLAY variable in localsettings to 7 (you can choose any other number too :D)
+	
 Getting started
 ============
 
@@ -42,7 +48,7 @@ API specification
       * param: `token` -- token from crowdAI
         for the environment instance
       * returns: `observation` -- the initial observation of the space
-    
+
   * POST `/v1/envs/<token>/step/`
       *  Step though an environment using an action.
       * param: `token` -- token from crowdAI
@@ -67,4 +73,4 @@ API specification
 
   * POST `/v1/envs/<token>/monitor/close/`
       * Flush all monitor data to disk
-      * param: `token` -- token from crowdAI	
+      * param: `token` -- token from crowdAI
