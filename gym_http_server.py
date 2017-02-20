@@ -14,6 +14,7 @@ from gym import error
 
 from localsettings import CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_ID
 from localsettings import REDIS_HOST, REDIS_PORT
+from localsettings import DEBUG_MODE
 
 from crowdai_worker import worker
 
@@ -208,10 +209,11 @@ class Envs(object):
         print("CLOSED %s, %f" % (instance_id, env.total))
         print("Submitting to crowdAI.org as Stanford...")
 
-        headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
-        r = requests.put(CROWDAI_URL + "%s?challenge_id=%d&score=%f&grading_status=graded" % (instance_id, CROWDAI_CHALLENGE_ID, env.total), headers=headers)
-        if r.status_code != 202:
-            return None
+        if not DEBUG_MODE:
+            headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
+            r = requests.put(CROWDAI_URL + "%s?challenge_id=%d&score=%f&grading_status=graded" % (instance_id, CROWDAI_CHALLENGE_ID, env.total), headers=headers)
+            if r.status_code != 202:
+                return None
 
         rPush("CROWDAI::SUBMITTED_Q", instance_id)
         Q.enqueue(worker, instance_id)
@@ -298,9 +300,14 @@ def env_create():
     token = get_required_param(request.get_json(), 'token')
 
     instance_id = envs.create(env_id, token)
+
+    if DEBUG_MODE:
+        response = jsonify(instance_id=token)
+        response.status_code = 200
+        return response
+
     headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
     r = requests.get(CROWDAI_URL + instance_id, headers=headers)
-
     response = jsonify(instance_id = token)
     response.status_code = r.status_code
 
