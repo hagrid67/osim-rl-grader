@@ -105,7 +105,7 @@ class Envs(object):
         except gym.error.Error:
             raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
 
-        instance_id = token #+ "___" + str(uuid.uuid4().hex)[:10]
+        instance_id = token + "___" + str(uuid.uuid4().hex)[:10]
         # TODO: that's an ugly way to control the program...
         try:
             self.env_close(instance_id)
@@ -302,13 +302,13 @@ def env_create():
     instance_id = envs.create(env_id, token)
 
     if DEBUG_MODE:
-        response = jsonify(instance_id=token)
+        response = jsonify(instance_id=instance_id)
         response.status_code = 200
         return response
 
     headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
-    r = requests.get(CROWDAI_URL + instance_id, headers=headers)
-    response = jsonify(instance_id = token)
+    r = requests.get(CROWDAI_URL + token, headers=headers)
+    response = jsonify(instance_id = instance_id)
     response.status_code = r.status_code
 
     return response
