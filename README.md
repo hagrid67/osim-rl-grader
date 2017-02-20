@@ -20,8 +20,12 @@ Installation
 
 		## Instructions for headless simulations
 		sudo apt-get install xpra
-		xpra start :7
-		# Now configure DISPLAY variable in localsettings to ":7" (you can set it to whatever DISPLAY var works for you)
+		# Start the xpra server by :
+    xpra --xvfb="Xorg -noreset -nolisten tcp +extension GLX \
+        -config /etc/xpra/xorg.conf \
+        +extension RANDR +extension RENDER -logfile ${HOME}/.xpra/Xorg-10.log" \
+        start :100    
+		# Now configure DISPLAY variable in localsettings to ":100" (you can set it to whatever DISPLAY var works for you)
 
 Getting started
 ============
