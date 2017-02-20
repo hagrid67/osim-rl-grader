@@ -4,11 +4,14 @@ import sys
 import redis
 from osim.env import GaitEnv
 
-REDIS_HOST = sys.argv[1]
-REDIS_PORT = sys.argv[2]
-SUBMISSION_ID = sys.argv[3]
+REDIS_HOST = str(sys.argv[1])
+REDIS_PORT = str(sys.argv[2])
+SUBMISSION_ID = str(sys.argv[3])
+CROWDAI_TOKEN = str(sys.argv[4])
+CROWDAI_URL = str(sys.argv[5])
+CROWDAI_CHALLENGE_ID = str(sys.argv[6])
 
-print REDIS_HOST, REDIS_PORT, SUBMISSION_ID
+print REDIS_HOST, REDIS_PORT, SUBMISSION_ID, CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_ID
 
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
 
