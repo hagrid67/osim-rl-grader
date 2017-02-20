@@ -6,4 +6,4 @@ CROWDAI_TOKEN="Authentication Token provided by CrowdAI"
 
 REDIS_HOST="127.0.0.1"
 REDIS_PORT=6379
-DISPLAY=7
+DISPLAY=":7"

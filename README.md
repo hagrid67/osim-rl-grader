@@ -21,8 +21,8 @@ Installation
 		## Instructions for headless simulations
 		sudo apt-get install xpra
 		xpra start :7
-		# Now configure DISPLAY variable in localsettings to 7 (you can choose any other number too :D)
-	
+		# Now configure DISPLAY variable in localsettings to ":7" (you can set it to whatever DISPLAY var works for you)
+
 Getting started
 ============
 
