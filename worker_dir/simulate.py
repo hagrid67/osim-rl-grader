@@ -6,6 +6,7 @@ from osim.env import GaitEnv
 import shutil
 from utils import *
 import requests
+import json
 
 REDIS_HOST = str(sys.argv[1])
 REDIS_PORT = str(sys.argv[2])
@@ -64,7 +65,8 @@ os.remove(FILE)
 print "Submitting GIF to CrowdAI...."
 crowdai_internal_submission_id = r.hget("CROWDAI::INSTANCE_ID_MAP", SUBMISSION_ID)
 headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
-r = requests.patch(CROWDAI_URL + "%s?submission_id=%s&s3_key=%s" % (CROWDAI_TOKEN,crowdai_internal_submission_id, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".gif"), headers=headers)
+r = requests.patch(CROWDAI_URL + "%s?submission_id=%s&s3_key=%s" % (crowdai_internal_submission_id.split("___")[0],crowdai_internal_submission_id, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".gif"), headers=headers)
+print json.loads(r.text)
 if r.status_code == 200:
 	print "Successfully Uploaded GIF to CrowdAI..."
 else:

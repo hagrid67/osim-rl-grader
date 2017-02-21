@@ -223,7 +223,7 @@ class Envs(object):
 		crowdai_submission_id = json.loads(r.text)["submission_id"]
         rPush("CROWDAI::SUBMITTED_Q", instance_id)
 	hSet("CROWDAI::INSTANCE_ID_MAP", instance_id, crowdai_submission_id)
-        Q.enqueue(worker, instance_id)
+        Q.enqueue(worker, instance_id, timeout=3600)
         ## TO-DO :: Store instance_id -> submission_id mapping in a hash
 
         return env.total
