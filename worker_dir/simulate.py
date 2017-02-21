@@ -15,6 +15,7 @@ CROWDAI_URL = str(sys.argv[5])
 CROWDAI_CHALLENGE_ID = str(sys.argv[6])
 S3_ACCESS_KEY = sys.argv[7]
 S3_SECRET_KEY = sys.argv[8]
+S3_BUCKET = sys.argv[9]
 
 os.environ["CROWDAI_SUBMISSION_ID"] = SUBMISSION_ID
 
@@ -56,8 +57,7 @@ shutil.rmtree(CWD+"/../"+SUBMISSION_ID)
 #Upload to S3
 print "Uploading GIF to S3...."
 FILE=CWD+"/"+SUBMISSION_ID+".gif"
-bucket="crowdai-shared-dev"
-upload_to_s3(S3_ACCESS_KEY, S3_SECRET_KEY, open(FILE, "rb"), bucket, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".gif")
+upload_to_s3(S3_ACCESS_KEY, S3_SECRET_KEY, open(FILE, "rb"), S3_BUCKET, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".gif")
 print "Successfully uploaded to S3..."
 print "Cleaning up...."
 os.remove(FILE)

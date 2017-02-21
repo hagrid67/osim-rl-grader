@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from localsettings import CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_ID
-from localsettings import S3_ACCESS_KEY, S3_SECRET_KEY
+from localsettings import S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET
 from localsettings import REDIS_HOST, REDIS_PORT
 from localsettings import DISPLAY
 from localsettings import DEBUG_MODE
@@ -20,7 +20,8 @@ def worker(submission_id):
     COMMAND += CROWDAI_URL + " "
     COMMAND += str(CROWDAI_CHALLENGE_ID) + " "
     COMMAND += S3_ACCESS_KEY + " "
-    COMMAND += S3_SECRET_KEY
+    COMMAND += S3_SECRET_KEY + " "
+    COMMAND += S3_BUCKET
     #Execute Command
     result = os.system(COMMAND)
     if result != 0:
