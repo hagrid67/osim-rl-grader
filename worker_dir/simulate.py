@@ -3,6 +3,7 @@ import os
 import sys
 import redis
 from osim.env import GaitEnv
+import shutil
 
 REDIS_HOST = str(sys.argv[1])
 REDIS_PORT = str(sys.argv[2])
@@ -14,6 +15,9 @@ CROWDAI_CHALLENGE_ID = str(sys.argv[6])
 os.environ["CROWDAI_SUBMISSION_ID"] = SUBMISSION_ID
 
 print REDIS_HOST, REDIS_PORT, SUBMISSION_ID, CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_ID
+print "Current Working Directory : ", os.path.dirname(os.path.realpath(__file__))
+
+CWD = os.path.dirname(os.path.realpath(__file__))
 
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
 
@@ -27,13 +31,21 @@ assert actions[-1] == "close"
 env = GaitEnv(True)
 observation = env.reset()
 
+print "Generating frames for the simulation...."
+
 for _action in actions[1:-1]:
     _action = _action[1:-1]
     _action = _action.split(",")
     _action = [float(x) for x in _action]
     observation, reward, done, info = env.step(_action)
-    print reward
+    #print reward
     if done:
         break
 
+print "Generating GIF from frames...."
+os.system("convert -delay 10 -loop 1 "+CWD+"/../"+SUBMISSION_ID+"/*.png "+CWD+"/"+SUBMISSION_ID+".gif")
+print "Generated GIF and saved at : ", CWD+"/"+SUBMISSION_ID+".gif"
+print "Cleaning up frames directory...."
+shutil.rmtree(CWD+"/../"+SUBMISSION_ID)
 # Generate GIF
+
