@@ -5,3 +5,4 @@ requests==2.11.0
 nose2==0.6.5
 redis==2.10.5
 rq==0.7.1
+boto==2.46.1
