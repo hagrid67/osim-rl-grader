@@ -20,7 +20,7 @@ from crowdai_worker import worker
 
 import redis
 from rq import Queue
-
+import json
 
 import logging
 logger = logging.getLogger('werkzeug')
@@ -31,6 +31,10 @@ logger.setLevel(logging.ERROR)
 """
 POOL = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, db=0)
 Q = Queue(connection=redis.Redis(host=REDIS_HOST, port=REDIS_PORT))
+
+def hSet(key, field, value):
+    my_server = redis.Redis(connection_pool=POOL)
+    my_server.hset(key, field, value)
 
 def rPush(key, value):
     my_server = redis.Redis(connection_pool=POOL)
@@ -211,11 +215,14 @@ class Envs(object):
 
         if not DEBUG_MODE:
             headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
-            r = requests.put(CROWDAI_URL + "%s?challenge_id=%d&score=%f&grading_status=graded" % (instance_id, CROWDAI_CHALLENGE_ID, env.total), headers=headers)
+            r = requests.post(CROWDAI_URL + "?api_key=%s&challenge_id=%d&score=%f&grading_status=graded" % (instance_id.split("___")[0], CROWDAI_CHALLENGE_ID, env.total), headers=headers)
             if r.status_code != 202:
                 return None
-
+            else:
+		print r.text
+		crowdai_submission_id = json.loads(r.text)["submission_id"]
         rPush("CROWDAI::SUBMITTED_Q", instance_id)
+	hSet("CROWDAI::INSTANCE_ID_MAP", instance_id, crowdai_submission_id)
         Q.enqueue(worker, instance_id)
         ## TO-DO :: Store instance_id -> submission_id mapping in a hash
 

@@ -5,6 +5,7 @@ import redis
 from osim.env import GaitEnv
 import shutil
 from utils import *
+import requests
 
 REDIS_HOST = str(sys.argv[1])
 REDIS_PORT = str(sys.argv[2])
@@ -60,3 +61,11 @@ upload_to_s3(S3_ACCESS_KEY, S3_SECRET_KEY, open(FILE, "rb"), bucket, "challenge_
 print "Successfully uploaded to S3..."
 print "Cleaning up...."
 os.remove(FILE)
+print "Submitting GIF to CrowdAI...."
+crowdai_internal_submission_id = r.hget("CROWDAI::INSTANCE_ID_MAP", SUBMISSION_ID)
+headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
+r = requests.patch(CROWDAI_URL + "%s?submission_id=%s&s3_key=%s" % (CROWDAI_TOKEN,crowdai_internal_submission_id, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".gif"), headers=headers)
+if r.status_code == 200:
+	print "Successfully Uploaded GIF to CrowdAI..."
+else:
+	print "Unable to upload GIF CrowdAI...."
