@@ -45,6 +45,7 @@ for _action in actions[1:-1]:
     if done:
         break
 
+##TODO :: Add Error Handling
 print "Generating GIF from frames...."
 os.system("convert -delay 10 -loop 1 "+CWD+"/../"+SUBMISSION_ID+"/*.png "+CWD+"/"+SUBMISSION_ID+".gif")
 print "Generated GIF and saved at : ", CWD+"/"+SUBMISSION_ID+".gif"
