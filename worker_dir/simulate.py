@@ -50,7 +50,7 @@ for _action in actions[1:-1]:
 
 ##TODO :: Add Error Handling
 print "Generating GIF from frames...."
-os.system("convert -delay 10 -loop 1 "+CWD+"/../"+SUBMISSION_ID+"/*.png "+CWD+"/"+SUBMISSION_ID+".gif")
+os.system("convert -delay 5 -loop 1 "+CWD+"/../"+SUBMISSION_ID+"/*.png "+CWD+"/"+SUBMISSION_ID+".gif")
 print "Generated GIF and saved at : ", CWD+"/"+SUBMISSION_ID+".gif"
 print "Cleaning up frames directory...."
 shutil.rmtree(CWD+"/../"+SUBMISSION_ID)
