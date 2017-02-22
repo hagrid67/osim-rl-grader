@@ -45,15 +45,35 @@ def worker(submission_id):
     # Append entry to a worker_log
 
 if __name__ == '__main__':
-	r = redis.Redis(REDIS_HOST, REDIS_PORT)
-	instance_id_map = r.hgetall("CROWDAI::INSTANCE_ID_MAP")
-	rev_map = {}
-	for _key in instance_id_map:
-		rev_map[instance_id_map[_key]] = _key
+	_arg = sys.argv[1]
+	data = "instance_id"
+	try:
+		i = int(_arg)
+		data = "submission_id"
+	except:
+		pass
+
+	if data=="instance_id":
+		instance_id = _arg
+	else:
+		r = redis.Redis(REDIS_HOST, REDIS_PORT)
+		instance_id_map = r.hgetall("CROWDAI::INSTANCE_ID_MAP")
+		print "Available Instance IDs for this submission are : "
+		found = False
+		for _key in instance_id_map:
+			if instance_id_map[_key] == _arg:
+				print _key
+				found = True
+		if found == False:
+			print "Sorry no instance_ids found for this submission..."
+		else:
+			print "Please execute again with the instance_id as a parameter"
+		exit(0)
+
 	# TO-DO: Handle case of one instance_id mapping to multiple submission ids	
 	internal_submission_id = str(sys.argv[1])
 	try:
-		submission_id = rev_map[internal_submission_id]
+		submission_id = internal_submission_id
 		worker(submission_id)
 	except:
 		print "Unable to find data for submission id...", internal_submission_id
