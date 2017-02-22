@@ -7,6 +7,7 @@ from localsettings import DEBUG_MODE
 import os
 import time
 import sys
+import redis
 
 def worker(submission_id):
     submission_id = str(submission_id)
@@ -44,4 +45,16 @@ def worker(submission_id):
     # Append entry to a worker_log
 
 if __name__ == '__main__':
-	worker(sys.argv[1])	
+	r = redis.Redis(REDIS_HOST, REDIS_PORT)
+	instance_id_map = r.hgetall("CROWDAI::INSTANCE_ID_MAP")
+	rev_map = {}
+	for _key in instance_id_map:
+		rev_map[instance_id_map[_key]] = _key
+	
+	internal_submission_id = str(sys.argv[1])
+	try:
+		submission_id = rev_map[internal_submission_id]
+		worker(submission_id)
+	except:
+		print "Unable to find data for submission id...", internal_submission_id
+	#worker(sys.argv[1])	
