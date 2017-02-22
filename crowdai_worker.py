@@ -6,6 +6,7 @@ from localsettings import DISPLAY
 from localsettings import DEBUG_MODE
 import os
 import time
+import sys
 
 def worker(submission_id):
     submission_id = str(submission_id)
@@ -41,3 +42,6 @@ def worker(submission_id):
     #Send request to CrowdAI Server
     # Cleanup your own mess
     # Append entry to a worker_log
+
+if __name__ == '__main__':
+	worker(sys.argv[1])	
