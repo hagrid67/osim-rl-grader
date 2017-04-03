@@ -25,19 +25,23 @@ def worker(submission_id):
     COMMAND += S3_SECRET_KEY + " "
     COMMAND += S3_BUCKET
     #Execute Command
-    result = os.system(COMMAND)
-    if result != 0:
-	print "Error in generating and uploading GIF :: ", submission_id
-	f = open("error.log", "a")
-	f.write("Error in generating and uploading GIF :: " + submission_id+"\n")
-	print "Attempting again..."
-	f.write("Attempting Again.....")## In case of simbody-visualizer crashes, it usually works out in the second try
-	time.sleep(10)
-	result = os.system(COMMAND)
-	if result != 0:
-		print "Error in generating and uploading GIF in the second attempt...", submission_id
-		f.write("Error in generating and uploading GIF in the second attempt..." + submission_id+"\n")	
-	f.close()
+    result_count = 0
+    while True:
+        result = os.system(COMMAND)
+        if result != 0:
+	    print "Error in generating and uploading GIF :: ", submission_id
+	    f = open("error.log", "a")
+	    f.write("Error in generating and uploading GIF :: " + submission_id+"\n")
+	    print "Attempting again..."
+	    f.write("Attempting Again.....")## In case of simbody-visualizer crashes, it usually works out in the second try
+	    time.sleep(10)
+	    f.close()
+            result_count += 1
+        else:
+            break
+
+        if result_count >= 5:
+            break
     #Run Simulation as a system call
     #Generate Gif
     #Send request to CrowdAI Server
