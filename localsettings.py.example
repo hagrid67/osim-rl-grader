@@ -4,3 +4,12 @@ CROWDAI_URL="API endpoint for the CrowdAI Instance, ex : http://www.crowdai.org/
 CROWDAI_CHALLENGE_ID="Challenge ID of the corresponding challenge"
 CROWDAI_TOKEN="Authentication Token provided by CrowdAI"
 
+REDIS_HOST="127.0.0.1"
+REDIS_PORT=6379
+DISPLAY=":100"
+
+S3_ACCESS_KEY="ACCESS_ID_FOR_AWS_USER"
+S3_SECRET_KEY="SECRET_KEY_FOR_AWS_USER"
+S3_BUCKET="Bucket Name where the GIFs will be uploaded to"
+
+DEBUG_MODE=False

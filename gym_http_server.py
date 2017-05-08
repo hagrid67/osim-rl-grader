@@ -13,10 +13,36 @@ from gym.wrappers.time_limit import TimeLimit
 from gym import error
 
 from localsettings import CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_ID
+from localsettings import REDIS_HOST, REDIS_PORT
+from localsettings import DEBUG_MODE
+
+from crowdai_worker import worker
+
+import redis
+from rq import Queue
+import json
 
 import logging
 logger = logging.getLogger('werkzeug')
 logger.setLevel(logging.ERROR)
+
+"""
+    Redis Conneciton Pool Helpers
+"""
+POOL = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, db=0)
+Q = Queue(connection=redis.Redis(host=REDIS_HOST, port=REDIS_PORT))
+
+def hSet(key, field, value):
+    my_server = redis.Redis(connection_pool=POOL)
+    my_server.hset(key, field, value)
+
+def rPush(key, value):
+    my_server = redis.Redis(connection_pool=POOL)
+    my_server.rpush(key, value)
+
+"""
+    Redis Connection Pool Helpers End
+"""
 
 class _ChallengeMonitor(_Monitor):
     total = 0.0
@@ -79,17 +105,24 @@ class Envs(object):
                 env = osim_envs[env_id](visualize=False)
             else:
                 raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
-            
+
         except gym.error.Error:
             raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
 
-        instance_id = token #str(uuid.uuid4().hex)[:self.id_len]
+        instance_id = token + "___" + str(uuid.uuid4().hex)[:10]
         # TODO: that's an ugly way to control the program...
         try:
             self.env_close(instance_id)
         except:
             pass
         self.envs[instance_id] = env
+
+        # Start the relevant data-queues for actions, observations and rewards
+        # for the said instance id
+        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "start")
+        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "start")
+        rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "start")
+
         return instance_id
 
     def list_all(self):
@@ -98,6 +131,7 @@ class Envs(object):
     def reset(self, instance_id):
         env = self._lookup_env(instance_id)
         obs = env.reset()
+        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id),str(obs))
         return env.observation_space.to_jsonable(obs)
 
     def step(self, instance_id, action, render):
@@ -110,6 +144,10 @@ class Envs(object):
             env.render()
         [observation, reward, done, info] = env.step(nice_action)
         obs_jsonable = env.observation_space.to_jsonable(observation)
+
+        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), str(nice_action.tolist()))
+        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), str(obs_jsonable))
+        rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), str(reward))
         return [obs_jsonable, reward, done, info]
 
     def get_action_space_contains(self, instance_id, x):
@@ -168,14 +206,26 @@ class Envs(object):
 
     def monitor_close(self, instance_id):
         env = self._lookup_env(instance_id)
+        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "close")
+        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "close")
+        rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "close")
+
         print("CLOSED %s, %f" % (instance_id, env.total))
         print("Submitting to crowdAI.org as Stanford...")
 
-        headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
-        r = requests.put(CROWDAI_URL + "%s?challenge_id=%d&score=%f&grading_status=graded" % (instance_id, CROWDAI_CHALLENGE_ID, env.total), headers=headers)
-        if r.status_code != 202:
-            return None
-        
+        if not DEBUG_MODE:
+            headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
+            r = requests.post(CROWDAI_URL + "?api_key=%s&challenge_id=%d&score=%f&grading_status=graded" % (instance_id.split("___")[0], CROWDAI_CHALLENGE_ID, env.total), headers=headers)
+            if r.status_code != 202:
+                return None
+            else:
+		print r.text
+		crowdai_submission_id = json.loads(r.text)["submission_id"]
+        rPush("CROWDAI::SUBMITTED_Q", instance_id)
+	hSet("CROWDAI::INSTANCE_ID_MAP", instance_id, crowdai_submission_id)
+        Q.enqueue(worker, instance_id, timeout=3600)
+        ## TO-DO :: Store instance_id -> submission_id mapping in a hash
+
         return env.total
 
     def env_close(self, instance_id):
@@ -257,13 +307,18 @@ def env_create():
     token = get_required_param(request.get_json(), 'token')
 
     instance_id = envs.create(env_id, token)
-    headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
-    r = requests.get(CROWDAI_URL + instance_id, headers=headers)
 
-    response = jsonify(instance_id = token)
+    if DEBUG_MODE:
+        response = jsonify(instance_id=instance_id)
+        response.status_code = 200
+        return response
+
+    headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
+    r = requests.get(CROWDAI_URL + token, headers=headers)
+    response = jsonify(instance_id = instance_id)
     response.status_code = r.status_code
 
-    return response    
+    return response
 
 #@app.route('/v1/envs/', methods=['GET'])
 def env_list_all():
@@ -344,7 +399,7 @@ def env_action_space_sample(instance_id):
     Returns:
 
     	- action: a randomly sampled element belonging to the action_space
-    """  
+    """
     action = envs.get_action_space_sample(instance_id)
     return jsonify(action = action)
 
@@ -352,14 +407,14 @@ def env_action_space_sample(instance_id):
 def env_action_space_contains(instance_id, x):
     """
     Assess that value is a member of the env's action_space
-    
+
     Parameters:
         - instance_id: a short identifier (such as '3c657dbc')
         for the environment instance
 	- x: the value to be checked as member
     Returns:
         - member: whether the value passed as parameter belongs to the action_space
-    """  
+    """
 
     member = envs.get_action_space_contains(instance_id, x)
     return jsonify(member = member)
@@ -475,4 +530,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     print('Server starting at: ' + 'http://{}:{}'.format(args.listen, args.port))
-    app.run(host=args.listen, port=args.port)
+    app.run(host=args.listen, port=args.port, debug=DEBUG_MODE)
