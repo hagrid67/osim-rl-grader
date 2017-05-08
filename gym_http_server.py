@@ -8,7 +8,7 @@ import argparse
 import sys
 import requests
 from gym.wrappers.monitoring import Monitor, _Monitor
-from osim.env import ArmEnv, GaitEnv
+from osim.env import RunEnv
 from gym.wrappers.time_limit import TimeLimit
 from gym import error
 
@@ -99,8 +99,7 @@ class Envs(object):
 
     def create(self, env_id, token):
         try:
-            osim_envs = {#'Arm': ArmEnv,
-                         'Gait': GaitEnv}
+            osim_envs = {'Run': RunEnv}
             if env_id in osim_envs.keys():
                 env = osim_envs[env_id](visualize=False)
             else:
