@@ -7,8 +7,8 @@ import six
 import argparse
 import sys
 import requests
-from gym.wrappers.monitoring import Monitor, _Monitor
-from osim.env import ArmEnv, GaitEnv
+from gym.wrappers.monitoring import Monitor #, _Monitor
+from osim.env import RunEnv
 from gym.wrappers.time_limit import TimeLimit
 from gym import error
 
@@ -44,29 +44,29 @@ def rPush(key, value):
     Redis Connection Pool Helpers End
 """
 
-class _ChallengeMonitor(_Monitor):
+class ChallengeMonitor(Monitor):
     total = 0.0
     def __init__(self, *args, **kwargs):
-        super(_ChallengeMonitor, self).__init__(*args, **kwargs)
+        super(ChallengeMonitor, self).__init__(*args, **kwargs)
 
     def _step(self, *args, **kwargs):
-        observation, reward, done, info = super(_ChallengeMonitor, self)._step(*args, **kwargs)
+        observation, reward, done, info = super(ChallengeMonitor, self)._step(*args, **kwargs)
         self.total = self.total + reward
         return observation, reward, done, info
 
     def _reset(self, *args, **kwargs):
-        observation = super(_ChallengeMonitor, self)._reset(*args, **kwargs)
+        observation = super(ChallengeMonitor, self)._reset(*args, **kwargs)
         self.total = 0.0
         return observation
 
 
-def ChallengeMonitor(env=None, directory=None, video_callable=None, force=False, resume=False,
-            write_upon_reset=False, uid=None, mode=None):
-    if not isinstance(env, gym.Env):
-        raise error.Error("Monitor decorator syntax is deprecated as of 12/28/2016. Replace your call to `env = gym.wrappers.Monitor(directory)(env)` with `env = gym.wrappers.Monitor(env, directory)`")
+# def ChallengeMonitor(env=None, directory=None, video_callable=None, force=False, resume=False,
+#             write_upon_reset=False, uid=None, mode=None):
+#     if not isinstance(env, gym.Env):
+#         raise error.Error("Monitor decorator syntax is deprecated as of 12/28/2016. Replace your call to `env = gym.wrappers.Monitor(directory)(env)` with `env = gym.wrappers.Monitor(env, directory)`")
 
-    return _ChallengeMonitor(TimeLimit(env, max_episode_steps=env.spec.timestep_limit), directory, video_callable, force, resume,
-write_upon_reset, uid, mode)
+#     return _ChallengeMonitor(TimeLimit(env, max_episode_steps=env.spec.timestep_limit), directory, video_callable, force, resume,
+# write_upon_reset, uid, mode)
 
 
 ########## Container for environments ##########
@@ -99,8 +99,7 @@ class Envs(object):
 
     def create(self, env_id, token):
         try:
-            osim_envs = {#'Arm': ArmEnv,
-                         'Gait': GaitEnv}
+            osim_envs = {'Run': RunEnv}
             if env_id in osim_envs.keys():
                 env = osim_envs[env_id](visualize=False)
             else:
@@ -222,8 +221,11 @@ class Envs(object):
 		print r.text
 		crowdai_submission_id = json.loads(r.text)["submission_id"]
         rPush("CROWDAI::SUBMITTED_Q", instance_id)
-	hSet("CROWDAI::INSTANCE_ID_MAP", instance_id, crowdai_submission_id)
-        Q.enqueue(worker, instance_id, timeout=3600)
+
+        
+        if not DEBUG_MODE:
+	    hSet("CROWDAI::INSTANCE_ID_MAP", instance_id, crowdai_submission_id)
+            Q.enqueue(worker, instance_id, timeout=3600)
         ## TO-DO :: Store instance_id -> submission_id mapping in a hash
 
         return env.total
