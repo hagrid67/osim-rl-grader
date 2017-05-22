@@ -2,7 +2,8 @@
 import os
 import sys
 import redis
-from osim.env import GaitEnv
+from osim.env.run import RunEnv
+
 import shutil
 from utils import *
 import requests
@@ -34,7 +35,7 @@ assert actions[0] == "start"
 assert actions[-1] == "close"
 
 ## Generate Visualization
-env = GaitEnv(True)
+env = RunEnv(True)
 observation = env.reset()
 
 print "Generating frames for the simulation...."
