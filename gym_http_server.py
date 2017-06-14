@@ -138,6 +138,9 @@ class Envs(object):
         env.trial += 1
         if env.trial == 4:
             obs = None
+        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "reset")
+        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "reset")
+        rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "reset")
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id),str(obs))
         return env.observation_space.to_jsonable(obs)
 
