@@ -48,6 +48,7 @@ class ChallengeMonitor(Monitor):
     total = 0.0
     def __init__(self, *args, **kwargs):
         super(ChallengeMonitor, self).__init__(*args, **kwargs)
+        self.total = 0.0
 
     def _step(self, *args, **kwargs):
         observation, reward, done, info = super(ChallengeMonitor, self)._step(*args, **kwargs)
@@ -55,8 +56,12 @@ class ChallengeMonitor(Monitor):
         return observation, reward, done, info
 
     def _reset(self, *args, **kwargs):
-        observation = super(ChallengeMonitor, self)._reset(*args, **kwargs)
-        self.total = 0.0
+        self._before_reset()
+        observation = self.env.reset(*args, **kwargs)
+        self._after_reset(observation)
+        print("Points so far: %f" % self.total)
+
+#        observation = super(ChallengeMonitor, self)._reset(*args, **kwargs)
         return observation
 
 
@@ -129,7 +134,10 @@ class Envs(object):
 
     def reset(self, instance_id):
         env = self._lookup_env(instance_id)
-        obs = env.reset()
+        obs = env._reset(difficulty=2, seed=env.trial)
+        env.trial += 1
+        if env.trial == 4:
+            obs = None
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id),str(obs))
         return env.observation_space.to_jsonable(obs)
 
@@ -202,6 +210,7 @@ class Envs(object):
         else:
             v_c = lambda count: count % video_callable == 0
         self.envs[instance_id] = ChallengeMonitor(env, directory, force=force, resume=resume, video_callable=v_c)
+        self.envs[instance_id].trial = 0
 
     def monitor_close(self, instance_id):
         env = self._lookup_env(instance_id)
