@@ -15,6 +15,7 @@ from gym import error
 from localsettings import CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_ID
 from localsettings import REDIS_HOST, REDIS_PORT
 from localsettings import DEBUG_MODE
+from localsettings import SEED_MAP
 
 from crowdai_worker import worker
 
@@ -134,7 +135,7 @@ class Envs(object):
 
     def reset(self, instance_id):
         env = self._lookup_env(instance_id)
-        obs = env._reset(difficulty=2, seed=env.trial)
+        obs = env._reset(difficulty=2, seed=SEED_MAP[env.trial])
         env.trial += 1
         if env.trial == 4:
             obs = None
@@ -234,7 +235,7 @@ class Envs(object):
 		crowdai_submission_id = json.loads(r.text)["submission_id"]
         rPush("CROWDAI::SUBMITTED_Q", instance_id)
 
-        
+
         if not DEBUG_MODE:
 	    hSet("CROWDAI::INSTANCE_ID_MAP", instance_id, crowdai_submission_id)
             Q.enqueue(worker, instance_id, timeout=3600)

@@ -13,3 +13,9 @@ S3_SECRET_KEY="SECRET_KEY_FOR_AWS_USER"
 S3_BUCKET="Bucket Name where the GIFs will be uploaded to"
 
 DEBUG_MODE=False
+
+SEED_MAP = [
+  <<EXAMPLE_SEED_1>>,
+  <<EXAMPLE_SEED_2>>,
+  <<EXAMPLE_SEED_3>>,
+]
