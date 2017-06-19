@@ -135,9 +135,9 @@ class Envs(object):
 
     def reset(self, instance_id):
         env = self._lookup_env(instance_id)
-        obs = env._reset(difficulty=2, seed=SEED_MAP[env.trial])
+        obs = env._reset(difficulty=2, seed=SEED_MAP[env.trial-1])
         env.trial += 1
-        if env.trial == 4:
+        if env.trial == len(SEED_MAP)+1:
             obs = None
         rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "reset")
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "reset")
