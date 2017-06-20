@@ -30,8 +30,9 @@ r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
 
 ACTIONS_QUERY = "CROWDAI::SUBMISSION::%s::actions" % SUBMISSION_ID
 
-actions = r.lrange(ACTIONS_QUERY, 0, 1000)
+actions = r.lrange(ACTIONS_QUERY, 0, 10000)
 assert actions[0] == "start"
+assert actions[1] == "reset"
 assert actions[-1] == "close"
 
 ## Generate Visualization
@@ -40,7 +41,17 @@ observation = env.reset()
 
 print "Generating frames for the simulation...."
 
-for _action in actions[1:-1]:
+"""
+THe first index will be "start"
+the second index will be "reset"
+the last index will be "close"
+
+the simulation should stop at the 2nd index
+"""
+for _action in actions[2:-1]:
+    if _action == "reset":
+        break
+
     _action = _action[1:-1]
     _action = _action.split(",")
     _action = [float(x) for x in _action]
