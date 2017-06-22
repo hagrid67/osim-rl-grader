@@ -104,11 +104,11 @@ CROWDAI_URL = "http://crowdai.org/api/external_graders/"+str(crowdai_internal_su
 
 _payload = {
 	"media_large" : "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".mp4",
-	"media_thumbnail" : "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+"_134x100.mp4"
+	"media_thumbnail" : "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+"_134x100.mp4",
 	"media_content_type" : "video/mp4"
 }
 r = requests.patch(CROWDAI_URL, params=_payload, headers=headers,verify=False)
-print json.loads(r.text)
+print r.text
 if r.status_code == 200:
 	print "Successfully Uploaded GIF to CrowdAI..."
 else:
