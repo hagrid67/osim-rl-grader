@@ -85,4 +85,4 @@ else:
 	print "Unable to upload GIF CrowdAI...."
 
 import os
-os.system("reboot")
+os.system("sudo reboot")
