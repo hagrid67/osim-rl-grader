@@ -114,5 +114,5 @@ if r.status_code == 200:
 else:
 	print "Unable to upload GIF CrowdAI...."
 
-#import os
-#os.system("sudo reboot")
+import os
+os.system("sudo reboot")
