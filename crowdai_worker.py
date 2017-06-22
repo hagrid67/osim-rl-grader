@@ -13,7 +13,7 @@ def worker(submission_id):
     submission_id = str(submission_id)
     print "Processing : ", submission_id
     COMMAND = ""
-    COMMAND += " DISPLAY="+DISPLAY
+    #COMMAND += " DISPLAY="+DISPLAY
     COMMAND += " "+os.getcwd()+"/worker_dir/simulate.py "
     COMMAND += REDIS_HOST+" "
     COMMAND += str(REDIS_PORT)+" "
