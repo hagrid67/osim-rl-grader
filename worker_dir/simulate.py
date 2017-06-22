@@ -100,7 +100,7 @@ print "Submitting media to CrowdAI...."
 headers = {'Authorization' : 'Token token='+CROWDAI_TOKEN, "Content-Type":"application/vnd.api+json"}
 crowdai_internal_submission_id = r.hget("CROWDAI::INSTANCE_ID_MAP", SUBMISSION_ID)
 
-CROWDAI_URL = "http://crowdai.org/api/external_graders/"+str(crowdai_internal_submission_id)
+CROWDAI_URL = "https://www.crowdai.org/api/external_graders/"+str(crowdai_internal_submission_id)
 
 _payload = {
 	"media_large" : "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".mp4",
