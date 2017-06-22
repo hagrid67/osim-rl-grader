@@ -96,14 +96,23 @@ os.remove(FILE)
 print "Successfully uploaded media to S3..."
 
 print "Submitting media to CrowdAI...."
+#TODO: Make these configurable and deal with the changes in the API 
+headers = {'Authorization' : 'Token token='+CROWDAI_TOKEN, "Content-Type":"application/vnd.api+json"}
 crowdai_internal_submission_id = r.hget("CROWDAI::INSTANCE_ID_MAP", SUBMISSION_ID)
-headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
-r = requests.patch(CROWDAI_URL + "%s?submission_id=%s&s3_key=%s" % (crowdai_internal_submission_id.split("___")[0],crowdai_internal_submission_id, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".gif"), headers=headers)
+
+CROWDAI_URL = "http://crowdai.org/api/external_graders/"+str(crowdai_internal_submission_id)
+
+_payload = {
+	"media_large" : "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".mp4",
+	"media_thumbnail" : "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+"_134x100.mp4"
+	"media_content_type" : "video/mp4"
+}
+r = requests.patch(CROWDAI_URL, params=_payload, headers=headers,verify=False)
 print json.loads(r.text)
 if r.status_code == 200:
 	print "Successfully Uploaded GIF to CrowdAI..."
 else:
 	print "Unable to upload GIF CrowdAI...."
 
-import os
-os.system("sudo reboot")
+#import os
+#os.system("sudo reboot")
