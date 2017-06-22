@@ -67,6 +67,8 @@ print "Generated GIF and saved at : ", CWD+"/"+SUBMISSION_ID+".gif"
 print "Cleaning up frames directory...."
 shutil.rmtree(CWD+"/../"+SUBMISSION_ID)
 # Generate GIF
+# TODO:
+# Post process GIF into nice mp4 animations
 #Upload to S3
 print "Uploading GIF to S3...."
 FILE=CWD+"/"+SUBMISSION_ID+".gif"
