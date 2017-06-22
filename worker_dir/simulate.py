@@ -64,6 +64,13 @@ for _action in actions[2:-1]:
 print "Generating GIF from frames...."
 os.system("convert -delay 5 -loop 1 "+CWD+"/../"+SUBMISSION_ID+"/*.png "+CWD+"/"+SUBMISSION_ID+".gif")
 print "Generated GIF and saved at : ", CWD+"/"+SUBMISSION_ID+".gif"
+
+print "Converting GIF to mp4..."
+os.system("ffmpeg -y -an -i "+CWD+"/"+SUBMISSION_ID+".gif -vcodec libx264 -pix_fmt yuv420p -profile:v baseline -level 3 "+CWD+"/"+SUBMISSION_ID+".mp4")
+
+print "Scaling down mp4 for creating thumbnail...."
+os.system("ffmpeg -y -i "+CWD+"/"+SUBMISSION_ID+".mp4 -vf scale=134:100 -c:a copy "+CWD+"/"+SUBMISSION_ID+"_134x100.mp4")
+
 print "Cleaning up frames directory...."
 shutil.rmtree(CWD+"/../"+SUBMISSION_ID)
 # Generate GIF
@@ -73,10 +80,22 @@ shutil.rmtree(CWD+"/../"+SUBMISSION_ID)
 print "Uploading GIF to S3...."
 FILE=CWD+"/"+SUBMISSION_ID+".gif"
 upload_to_s3(S3_ACCESS_KEY, S3_SECRET_KEY, open(FILE, "rb"), S3_BUCKET, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".gif")
-print "Successfully uploaded to S3..."
-print "Cleaning up...."
+print "Cleaning up GIF...."
 os.remove(FILE)
-print "Submitting GIF to CrowdAI...."
+print "Uploading mp4 to S3"
+FILE=CWD+"/"+SUBMISSION_ID+".mp4"
+upload_to_s3(S3_ACCESS_KEY, S3_SECRET_KEY, open(FILE, "rb"), S3_BUCKET, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".mp4")
+print "Cleaning up MP4...."
+os.remove(FILE)
+print "Uploading scaled mp4 to S3"
+FILE=CWD+"/"+SUBMISSION_ID+"_134x100.mp4"
+upload_to_s3(S3_ACCESS_KEY, S3_SECRET_KEY, open(FILE, "rb"), S3_BUCKET, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+"_134x100.mp4")
+print "Cleaning up Scaled MP4...."
+os.remove(FILE)
+
+print "Successfully uploaded media to S3..."
+
+print "Submitting media to CrowdAI...."
 crowdai_internal_submission_id = r.hget("CROWDAI::INSTANCE_ID_MAP", SUBMISSION_ID)
 headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
 r = requests.patch(CROWDAI_URL + "%s?submission_id=%s&s3_key=%s" % (crowdai_internal_submission_id.split("___")[0],crowdai_internal_submission_id, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".gif"), headers=headers)
