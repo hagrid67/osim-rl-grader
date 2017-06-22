@@ -83,3 +83,6 @@ if r.status_code == 200:
 	print "Successfully Uploaded GIF to CrowdAI..."
 else:
 	print "Unable to upload GIF CrowdAI...."
+
+import os
+os.system("reboot")
