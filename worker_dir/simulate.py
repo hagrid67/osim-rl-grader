@@ -88,7 +88,7 @@ upload_to_s3(S3_ACCESS_KEY, S3_SECRET_KEY, open(FILE, "rb"), S3_BUCKET, "challen
 print "Cleaning up MP4...."
 os.remove(FILE)
 print "Uploading scaled mp4 to S3"
-FILE=CWD+"/"+SUBMISSION_ID+"_134x100.mp4"
+FILE=CWD+"/"+SUBMISSION_ID+"_thumb.mp4"
 upload_to_s3(S3_ACCESS_KEY, S3_SECRET_KEY, open(FILE, "rb"), S3_BUCKET, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+"_thumb.mp4")
 print "Cleaning up Scaled MP4...."
 os.remove(FILE)
