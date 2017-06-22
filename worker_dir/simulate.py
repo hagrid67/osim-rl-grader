@@ -69,7 +69,7 @@ print "Converting GIF to mp4..."
 os.system("ffmpeg -y -an -i "+CWD+"/"+SUBMISSION_ID+".gif -vcodec libx264 -pix_fmt yuv420p -profile:v baseline -level 3 "+CWD+"/"+SUBMISSION_ID+".mp4")
 
 print "Scaling down mp4 for creating thumbnail...."
-os.system("ffmpeg -y -i "+CWD+"/"+SUBMISSION_ID+".mp4 -vf scale=134:100 -c:a copy "+CWD+"/"+SUBMISSION_ID+"_134x100.mp4")
+os.system("ffmpeg -y -i "+CWD+"/"+SUBMISSION_ID+".mp4 -vf scale=268:200 -c:a copy "+CWD+"/"+SUBMISSION_ID+"_thumb.mp4")
 
 print "Cleaning up frames directory...."
 shutil.rmtree(CWD+"/../"+SUBMISSION_ID)
@@ -89,7 +89,7 @@ print "Cleaning up MP4...."
 os.remove(FILE)
 print "Uploading scaled mp4 to S3"
 FILE=CWD+"/"+SUBMISSION_ID+"_134x100.mp4"
-upload_to_s3(S3_ACCESS_KEY, S3_SECRET_KEY, open(FILE, "rb"), S3_BUCKET, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+"_134x100.mp4")
+upload_to_s3(S3_ACCESS_KEY, S3_SECRET_KEY, open(FILE, "rb"), S3_BUCKET, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+"_thumb.mp4")
 print "Cleaning up Scaled MP4...."
 os.remove(FILE)
 
@@ -104,7 +104,7 @@ CROWDAI_URL = "https://www.crowdai.org/api/external_graders/"+str(crowdai_intern
 
 _payload = {
 	"media_large" : "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+".mp4",
-	"media_thumbnail" : "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+"_134x100.mp4",
+	"media_thumbnail" : "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+"_thumb.mp4",
 	"media_content_type" : "video/mp4"
 }
 r = requests.patch(CROWDAI_URL, params=_payload, headers=headers,verify=False)
