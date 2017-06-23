@@ -18,6 +18,7 @@ CROWDAI_CHALLENGE_ID = str(sys.argv[6])
 S3_ACCESS_KEY = sys.argv[7]
 S3_SECRET_KEY = sys.argv[8]
 S3_BUCKET = sys.argv[9]
+SEED = int(sys.argv[10])
 
 os.environ["CROWDAI_SUBMISSION_ID"] = SUBMISSION_ID
 
@@ -37,7 +38,7 @@ assert actions[-1] == "close"
 
 ## Generate Visualization
 env = RunEnv(True)
-observation = env.reset()
+observation = env.reset(difficulty=2, seed=SEED)
 
 print "Generating frames for the simulation...."
 

@@ -4,6 +4,7 @@ from localsettings import S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET
 from localsettings import REDIS_HOST, REDIS_PORT
 from localsettings import DISPLAY
 from localsettings import DEBUG_MODE
+from localsettings import SEED_MAP
 import os
 import time
 import sys
@@ -23,7 +24,8 @@ def worker(submission_id):
     COMMAND += str(CROWDAI_CHALLENGE_ID) + " "
     COMMAND += S3_ACCESS_KEY + " "
     COMMAND += S3_SECRET_KEY + " "
-    COMMAND += S3_BUCKET
+    COMMAND += S3_BUCKET + " "
+    COMMAND += str(SEED_MAP[0])
     #Execute Command
     result_count = 0
     while True:
