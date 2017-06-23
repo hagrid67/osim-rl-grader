@@ -139,6 +139,7 @@ class Envs(object):
         env.trial += 1
         if env.trial == len(SEED_MAP)+1:
             obs = None
+
         rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "reset")
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "reset")
         rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "reset")
@@ -155,6 +156,9 @@ class Envs(object):
             env.render()
         [observation, reward, done, info] = env.step(nice_action)
         obs_jsonable = env.observation_space.to_jsonable(observation)
+
+	if env.trail == 1:	
+	        rPush("CROWDAI::SUBMISSION::%s::trial_1_actions"%(instance_id), str(nice_action.tolist()))
 
         rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), str(nice_action.tolist()))
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), str(obs_jsonable))

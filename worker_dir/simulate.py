@@ -29,12 +29,9 @@ CWD = os.path.dirname(os.path.realpath(__file__))
 
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
 
-ACTIONS_QUERY = "CROWDAI::SUBMISSION::%s::actions" % SUBMISSION_ID
+ACTIONS_QUERY = "CROWDAI::SUBMISSION::%s::trial_1_actions" % SUBMISSION_ID
 
 actions = r.lrange(ACTIONS_QUERY, 0, 10000)
-assert actions[0] == "start"
-assert actions[1] == "reset"
-assert actions[-1] == "close"
 
 ## Generate Visualization
 env = RunEnv(True)
@@ -49,10 +46,7 @@ the last index will be "close"
 
 the simulation should stop at the 2nd index
 """
-for _action in actions[2:-1]:
-    if _action == "reset":
-        break
-
+for _action in actions:
     _action = _action[1:-1]
     _action = _action.split(",")
     _action = [float(x) for x in _action]
