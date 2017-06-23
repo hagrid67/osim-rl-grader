@@ -157,7 +157,7 @@ class Envs(object):
         [observation, reward, done, info] = env.step(nice_action)
         obs_jsonable = env.observation_space.to_jsonable(observation)
 
-	if env.trail == 1:	
+	if env.trial == 1:	
 	        rPush("CROWDAI::SUBMISSION::%s::trial_1_actions"%(instance_id), str(nice_action.tolist()))
 
         rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), str(nice_action.tolist()))
