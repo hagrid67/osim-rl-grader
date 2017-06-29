@@ -30,8 +30,8 @@ logger.setLevel(logging.ERROR)
 """
     Redis Conneciton Pool Helpers
 """
-POOL = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, db=0)
-Q = Queue(connection=redis.Redis(host=REDIS_HOST, port=REDIS_PORT))
+POOL = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, db=1)
+Q = Queue(connection=redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=1))
 
 def hSet(key, field, value):
     my_server = redis.Redis(connection_pool=POOL)
