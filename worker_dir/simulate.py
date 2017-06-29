@@ -27,7 +27,7 @@ print "Current Working Directory : ", os.path.dirname(os.path.realpath(__file__)
 
 CWD = os.path.dirname(os.path.realpath(__file__))
 
-r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
+r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=1)
 
 ACTIONS_QUERY = "CROWDAI::SUBMISSION::%s::trial_1_actions" % SUBMISSION_ID
 
