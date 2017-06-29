@@ -62,7 +62,7 @@ if __name__ == '__main__':
 	if data=="instance_id":
 		instance_id = _arg
 	else:
-		r = redis.Redis(REDIS_HOST, REDIS_PORT)
+		r = redis.Redis(REDIS_HOST, REDIS_PORT, db=1)
 		instance_id_map = r.hgetall("CROWDAI::INSTANCE_ID_MAP")
 		print "Available Instance IDs for this submission are : "
 		found = False
