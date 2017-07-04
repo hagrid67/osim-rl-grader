@@ -226,7 +226,7 @@ class Envs(object):
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "close")
         rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "close")
 
-        SCORE = env.totatl
+        SCORE = env.total
         SCORE = SCORE * 1.0 / len(SEED_MAP)
 
         print("CLOSED %s, %f" % (instance_id, SCORE))
