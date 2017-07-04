@@ -226,12 +226,15 @@ class Envs(object):
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "close")
         rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "close")
 
-        print("CLOSED %s, %f" % (instance_id, env.total))
+        SCORE = env.totatl
+        SCORE = SCORE * 1.0 / len(SEED_MAP)
+
+        print("CLOSED %s, %f" % (instance_id, SCORE))
         print("Submitting to crowdAI.org as Stanford...")
 
         if not DEBUG_MODE:
             headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
-            r = requests.post(CROWDAI_URL + "?api_key=%s&challenge_id=%d&score=%f&grading_status=graded" % (instance_id.split("___")[0], CROWDAI_CHALLENGE_ID, env.total), headers=headers)
+            r = requests.post(CROWDAI_URL + "?api_key=%s&challenge_id=%d&score=%f&grading_status=graded" % (instance_id.split("___")[0], CROWDAI_CHALLENGE_ID, SCORE), headers=headers)
             if r.status_code != 202:
                 return None
             else:
@@ -245,7 +248,7 @@ class Envs(object):
             Q.enqueue(worker, instance_id, timeout=3600)
         ## TO-DO :: Store instance_id -> submission_id mapping in a hash
 
-        return env.total
+        return SCORE
 
     def env_close(self, instance_id):
         env = self._lookup_env(instance_id)
