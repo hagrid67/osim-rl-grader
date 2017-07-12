@@ -327,8 +327,14 @@ def env_create():
     """
     env_id = get_required_param(request.get_json(), 'env_id')
     token = get_required_param(request.get_json(), 'token')
+    version = get_required_param(request.get_json(), 'version')
 
     instance_id = envs.create(env_id, token)
+
+    if version != "1.3":
+        response = jsonify(message = "Wrong version. Please update to the new version. Read more on https://github.com/stanfordnmbl/osim-rl/docs")
+        response.status_code = 400
+        return response
 
     if DEBUG_MODE:
         response = jsonify(instance_id=instance_id)
