@@ -7,6 +7,7 @@ import six
 import argparse
 import sys
 import requests
+import pkg_resources
 from gym.wrappers.monitoring import Monitor #, _Monitor
 from osim.env import RunEnv
 from gym.wrappers.time_limit import TimeLimit
@@ -331,7 +332,7 @@ def env_create():
 
     instance_id = envs.create(env_id, token)
 
-    if version != "1.3":
+    if version != pkg_resources.get_distribution("osim-rl").version:
         response = jsonify(message = "Wrong version. Please update to the new version. Read more on https://github.com/stanfordnmbl/osim-rl/docs")
         response.status_code = 400
         return response
