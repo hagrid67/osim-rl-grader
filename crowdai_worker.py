@@ -42,7 +42,7 @@ def worker(submission_id):
         else:
             break
 
-        if result_count >= 5:
+        if result_count >= 1:
             break
     #Run Simulation as a system call
     #Generate Gif
