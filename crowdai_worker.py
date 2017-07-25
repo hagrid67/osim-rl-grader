@@ -50,6 +50,7 @@ def worker(submission_id):
     # Cleanup your own mess
     # Append entry to a worker_log
 
+show_action_map = False
 if __name__ == '__main__':
 	_arg = sys.argv[1]
 	data = "instance_id"
@@ -70,6 +71,11 @@ if __name__ == '__main__':
 			if instance_id_map[_key] == _arg:
 				print _key
 				found = True
+				
+				if show_action_map:
+					ACTIONS_QUERY = "CROWDAI::SUBMISSION::%s::trial_1_actions" % _key
+					actions = r.lrange(ACTIONS_QUERY, 0, 10000)
+					print actions		
 		if found == False:
 			print "Sorry no instance_ids found for this submission..."
 		else:

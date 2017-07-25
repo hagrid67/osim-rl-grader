@@ -3,6 +3,7 @@ import os
 import sys
 import redis
 from osim.env.run import RunEnv
+import numpy as np
 
 import shutil
 from utils import *
@@ -46,10 +47,9 @@ the last index will be "close"
 
 the simulation should stop at the 2nd index
 """
+print actions
 for _action in actions:
-    _action = _action[1:-1]
-    _action = _action.split(",")
-    _action = [float(x) for x in _action]
+    _action = np.array(eval(_action)).flatten().tolist()
     observation, reward, done, info = env.step(_action)
     #print reward
     if done:
