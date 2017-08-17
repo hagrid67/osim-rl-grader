@@ -64,7 +64,7 @@ print "Converting GIF to mp4..."
 os.system("ffmpeg -y -an -i "+CWD+"/"+SUBMISSION_ID+".gif -vcodec libx264 -pix_fmt yuv420p -profile:v baseline -level 3 "+CWD+"/"+SUBMISSION_ID+"_wo_logo.mp4")
 
 print "Adding crowdAI watermark..."
-os.system("ffmpeg -i "+CWD+"/"+SUBMISSION_ID+"_wo_logo.mp4 -i "+CWD+"/crowdai-logo.png -filter_complex overlay=10:10 -codec:a copy "CWD+"/"+SUBMISSION_ID".mp4")
+os.system("ffmpeg -i "+CWD+"/"+SUBMISSION_ID+"_wo_logo.mp4 -i "+CWD+"/crowdai-logo.png -filter_complex overlay=10:10 -codec:a copy "+CWD+"/"+SUBMISSION_ID+".mp4")
 
 print "Scaling down mp4 for creating thumbnail...."
 os.system("ffmpeg -y -i "+CWD+"/"+SUBMISSION_ID+".mp4 -vf scale=268:200 -c:a copy "+CWD+"/"+SUBMISSION_ID+"_thumb.mp4")
