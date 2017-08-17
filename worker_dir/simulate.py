@@ -61,16 +61,16 @@ os.system("convert -delay 5 -loop 1 "+CWD+"/../"+SUBMISSION_ID+"/*.png "+CWD+"/"
 print "Generated GIF and saved at : ", CWD+"/"+SUBMISSION_ID+".gif"
 
 print "Converting GIF to mp4..."
-os.system("ffmpeg -y -an -i "+CWD+"/"+SUBMISSION_ID+".gif -vcodec libx264 -pix_fmt yuv420p -profile:v baseline -level 3 "+CWD+"/"+SUBMISSION_ID+".mp4")
+os.system("ffmpeg -y -an -i "+CWD+"/"+SUBMISSION_ID+".gif -vcodec libx264 -pix_fmt yuv420p -profile:v baseline -level 3 "+CWD+"/"+SUBMISSION_ID+"_wo_logo.mp4")
+
+print "Adding crowdAI watermark..."
+os.system("ffmpeg -i "+CWD+"/"+SUBMISSION_ID+"_wo_logo.mp4 -i "+CWD+"/crowdai-logo.png -filter_complex overlay=10:10 -codec:a copy "CWD+"/"+SUBMISSION_ID".mp4")
 
 print "Scaling down mp4 for creating thumbnail...."
 os.system("ffmpeg -y -i "+CWD+"/"+SUBMISSION_ID+".mp4 -vf scale=268:200 -c:a copy "+CWD+"/"+SUBMISSION_ID+"_thumb.mp4")
 
 print "Cleaning up frames directory...."
 shutil.rmtree(CWD+"/../"+SUBMISSION_ID)
-# Generate GIF
-# TODO:
-# Post process GIF into nice mp4 animations
 #Upload to S3
 print "Uploading GIF to S3...."
 FILE=CWD+"/"+SUBMISSION_ID+".gif"
@@ -85,10 +85,13 @@ os.remove(FILE)
 print "Uploading scaled mp4 to S3"
 FILE=CWD+"/"+SUBMISSION_ID+"_thumb.mp4"
 upload_to_s3(S3_ACCESS_KEY, S3_SECRET_KEY, open(FILE, "rb"), S3_BUCKET, "challenge_"+str(CROWDAI_CHALLENGE_ID)+"/"+SUBMISSION_ID+"_thumb.mp4")
+print "Successfully uploaded media to S3..."
 print "Cleaning up Scaled MP4...."
 os.remove(FILE)
+FILE=CWD+"/"+SUBMISSION_ID+"_wo_logo.mp4"
+print "Cleaning up intial mp4"
+os.remove(FILE)
 
-print "Successfully uploaded media to S3..."
 
 print "Submitting media to CrowdAI...."
 #TODO: Make these configurable and deal with the changes in the API 
