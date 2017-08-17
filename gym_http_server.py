@@ -17,6 +17,7 @@ from localsettings import CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_ID
 from localsettings import REDIS_HOST, REDIS_PORT
 from localsettings import DEBUG_MODE
 from localsettings import SEED_MAP
+from localsettings import CROWDAI_REPLAY_DATA_VERSION
 
 from crowdai_worker import worker
 
@@ -144,7 +145,7 @@ class Envs(object):
         rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "reset")
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "reset")
         rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "reset")
-        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id),str(obs))
+        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id),repr(obs))
         return env.observation_space.to_jsonable(obs)
 
     def step(self, instance_id, action, render):
@@ -159,11 +160,11 @@ class Envs(object):
         obs_jsonable = env.observation_space.to_jsonable(observation)
 
 	if env.trial == 1:	
-	        rPush("CROWDAI::SUBMISSION::%s::trial_1_actions"%(instance_id), str(nice_action.tolist()))
+	        rPush("CROWDAI::SUBMISSION::%s::trial_1_actions"%(instance_id), repr(nice_action.tolist()))
 
-        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), str(nice_action.tolist()))
-        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), str(obs_jsonable))
-        rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), str(reward))
+        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), repr(nice_action.tolist()))
+        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), repr(obs_jsonable))
+        rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), repr(reward))
         return [obs_jsonable, reward, done, info]
 
     def get_action_space_contains(self, instance_id, x):
@@ -226,6 +227,10 @@ class Envs(object):
         rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "close")
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "close")
         rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "close")
+
+        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "CROWDAI_REPLAY_DATA_VERSION:"+CROWDAI_REPLAY_DATA_VERSION)
+        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "CROWDAI_REPLAY_DATA_VERSION:"+CROWDAI_REPLAY_DATA_VERSION)
+        rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "CROWDAI_REPLAY_DATA_VERSION:"+CROWDAI_REPLAY_DATA_VERSION)
 
         SCORE = env.total
         SCORE = SCORE * 1.0 / len(SEED_MAP)
