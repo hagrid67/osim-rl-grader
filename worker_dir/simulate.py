@@ -19,7 +19,10 @@ CROWDAI_CHALLENGE_ID = str(sys.argv[6])
 S3_ACCESS_KEY = sys.argv[7]
 S3_SECRET_KEY = sys.argv[8]
 S3_BUCKET = sys.argv[9]
-SEED = int(sys.argv[10])
+SEED_MAP = sys.argv[10]
+print SEED_MAP
+SEED_MAP = [int(x) for x in SEED_MAP.split(",")]
+print SEED_MAP
 
 os.environ["CROWDAI_SUBMISSION_ID"] = SUBMISSION_ID
 
@@ -30,13 +33,30 @@ CWD = os.path.dirname(os.path.realpath(__file__))
 
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=1)
 
-ACTIONS_QUERY = "CROWDAI::SUBMISSION::%s::trial_1_actions" % SUBMISSION_ID
+ACTIONS_QUERY = "CROWDAI::SUBMISSION::%s::actions" % SUBMISSION_ID
 
 actions = r.lrange(ACTIONS_QUERY, 0, 10000)
 
 ## Generate Visualization
 env = RunEnv(True)
-observation = env.reset(difficulty=2, seed=SEED)
+
+import json
+
+ACTIONS = []
+
+for _action in actions:
+        if _action == "start":
+                pass
+        elif _action == "reset":
+                ACTIONS.append([])
+        elif _action == "close":
+                pass
+        elif _action.startswith("CROWDAI_REPLAY_DATA_VERSION"):
+                pass
+        else:
+                _action = np.array(eval(_action))
+                ACTIONS[-1].append(_action)
+
 
 print "Generating frames for the simulation...."
 
@@ -48,12 +68,32 @@ the last index will be "close"
 the simulation should stop at the 2nd index
 """
 print actions
-for _action in actions:
-    _action = np.array(eval(_action)).flatten().tolist()
-    observation, reward, done, info = env.step(_action)
-    #print reward
-    if done:
-        break
+trial_count = 0
+
+OBSERVATIONS = []
+REWARDS = []
+
+for idx, trial in enumerate(ACTIONS):
+	if idx >= len(SEED_MAP):
+		break
+        observation = env.reset(difficulty=2, seed=SEED_MAP[trial_count])
+	OBSERVATIONS.append("reset")
+	REWARDS.append("reset")
+	OBSERVATIONS.append(observation)
+	for _action in trial:
+		observation, reward, done, info = env.step(_action)
+		OBSERVATIONS.append(observation)
+		REWARDS.append(reward)
+		if done:
+			break
+
+print "Writing down Observation and rewards logs"
+fp = open(CWD+"/data_dir/"+SUBMISSION_ID+"_observation.json", "w")
+fp.write(json.dumps(OBSERVATIONS))
+fp.close()
+fp = open(CWD + "/data_dir/"+SUBMISSION_ID+"_rewards.json", "w")
+fp.write(json.dumps(REWARDS))
+fp.close()
 
 ##TODO :: Add Error Handling
 print "Generating GIF from frames...."

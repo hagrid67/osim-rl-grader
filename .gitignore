@@ -66,3 +66,5 @@ binding-rust/target
 # Haskell binding
 binding-hs/.stack-work/*
 binding-hs/*.tags
+
+worker_dir/data_dir/*.json

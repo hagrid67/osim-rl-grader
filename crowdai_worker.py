@@ -25,7 +25,7 @@ def worker(submission_id):
     COMMAND += S3_ACCESS_KEY + " "
     COMMAND += S3_SECRET_KEY + " "
     COMMAND += S3_BUCKET + " "
-    COMMAND += str(SEED_MAP[0])
+    COMMAND += ",".join([str(x) for x in SEED_MAP])
     #Execute Command
     result_count = 0
     while True:
