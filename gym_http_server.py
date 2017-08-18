@@ -156,13 +156,14 @@ class Envs(object):
             nice_action = np.array(action)
         if render:
             env.render()
-        [observation, reward, done, info] = env.step(nice_action)
+         
+        serialized_action = repr(nice_action.tolist())
+        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), serialized_action)
+        deserialized_action = np.array(eval(serialized_action))
+
+        [observation, reward, done, info] = env.step(deserialized_action)
         obs_jsonable = env.observation_space.to_jsonable(observation)
 
-	if env.trial == 1:	
-	        rPush("CROWDAI::SUBMISSION::%s::trial_1_actions"%(instance_id), repr(nice_action.tolist()))
-
-        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), repr(nice_action.tolist()))
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), repr(obs_jsonable))
         rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), repr(reward))
         return [obs_jsonable, reward, done, info]
