@@ -20,9 +20,9 @@ S3_ACCESS_KEY = sys.argv[7]
 S3_SECRET_KEY = sys.argv[8]
 S3_BUCKET = sys.argv[9]
 SEED_MAP = sys.argv[10]
-print SEED_MAP
+RENDER_LOGO = int(sys.argv[11]) == 1
+
 SEED_MAP = [int(x) for x in SEED_MAP.split(",")]
-print SEED_MAP
 
 os.environ["CROWDAI_SUBMISSION_ID"] = SUBMISSION_ID
 
@@ -67,7 +67,6 @@ the last index will be "close"
 
 the simulation should stop at the 2nd index
 """
-print actions
 trial_count = 0
 
 OBSERVATIONS = []
@@ -101,10 +100,17 @@ os.system("convert -delay 5 -loop 1 "+CWD+"/../"+SUBMISSION_ID+"/*.png "+CWD+"/"
 print "Generated GIF and saved at : ", CWD+"/"+SUBMISSION_ID+".gif"
 
 print "Converting GIF to mp4..."
-os.system("ffmpeg -y -an -i "+CWD+"/"+SUBMISSION_ID+".gif -vcodec libx264 -pix_fmt yuv420p -profile:v baseline -level 3 "+CWD+"/"+SUBMISSION_ID+"_wo_logo.mp4")
 
-print "Adding crowdAI watermark..."
-os.system("ffmpeg -i "+CWD+"/"+SUBMISSION_ID+"_wo_logo.mp4 -i "+CWD+"/crowdai-logo.png -filter_complex overlay=10:10 -codec:a copy "+CWD+"/"+SUBMISSION_ID+".mp4")
+if RENDER_LOGO:
+    target_filename_suffix="_wo_logo"
+else:
+    target_filename_suffix=""
+
+os.system("ffmpeg -y -an -i "+CWD+"/"+SUBMISSION_ID+".gif -vcodec libx264 -pix_fmt yuv420p -profile:v baseline -level 3 "+CWD+"/"+SUBMISSION_ID+target_filename_suffix+".mp4")
+
+if RENDER_LOGO:
+	print "Adding crowdAI watermark..."
+	os.system("ffmpeg -i "+CWD+"/"+SUBMISSION_ID+"_wo_logo.mp4 -i "+CWD+"/crowdai-logo.png -filter_complex overlay=10:10 -codec:a copy "+CWD+"/"+SUBMISSION_ID+".mp4")
 
 print "Scaling down mp4 for creating thumbnail...."
 os.system("ffmpeg -y -i "+CWD+"/"+SUBMISSION_ID+".mp4 -vf scale=268:200 -c:a copy "+CWD+"/"+SUBMISSION_ID+"_thumb.mp4")

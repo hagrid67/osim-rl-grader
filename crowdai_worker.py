@@ -5,6 +5,7 @@ from localsettings import REDIS_HOST, REDIS_PORT
 from localsettings import DISPLAY
 from localsettings import DEBUG_MODE
 from localsettings import SEED_MAP
+from localsettings import RENDER_LOGO
 import os
 import time
 import sys
@@ -25,7 +26,8 @@ def worker(submission_id):
     COMMAND += S3_ACCESS_KEY + " "
     COMMAND += S3_SECRET_KEY + " "
     COMMAND += S3_BUCKET + " "
-    COMMAND += ",".join([str(x) for x in SEED_MAP])
+    COMMAND += ",".join([str(x) for x in SEED_MAP]) + " "
+    COMMAND += str(RENDER_LOGO)
     #Execute Command
     result_count = 0
     while True:

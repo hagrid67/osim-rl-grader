@@ -21,3 +21,5 @@ SEED_MAP = [
   <<EXAMPLE_SEED_2>>,
   <<EXAMPLE_SEED_3>>,
 ]
+
+RENDER_LOGO=0
