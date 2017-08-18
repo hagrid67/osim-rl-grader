@@ -134,9 +134,10 @@ upload_to_s3(S3_ACCESS_KEY, S3_SECRET_KEY, open(FILE, "rb"), S3_BUCKET, "challen
 print "Successfully uploaded media to S3..."
 print "Cleaning up Scaled MP4...."
 os.remove(FILE)
-FILE=CWD+"/"+SUBMISSION_ID+"_wo_logo.mp4"
-print "Cleaning up intial mp4"
-os.remove(FILE)
+if RENDER_LOGO:
+	FILE=CWD+"/"+SUBMISSION_ID+"_wo_logo.mp4"
+	print "Cleaning up intial mp4"
+	os.remove(FILE)
 
 
 print "Submitting media to CrowdAI...."
