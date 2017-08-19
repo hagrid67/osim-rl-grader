@@ -67,7 +67,6 @@ the last index will be "close"
 
 the simulation should stop at the 2nd index
 """
-trial_count = 0
 
 OBSERVATIONS = []
 REWARDS = []
@@ -75,7 +74,7 @@ REWARDS = []
 for idx, trial in enumerate(ACTIONS):
 	if idx >= len(SEED_MAP):
 		break
-        observation = env.reset(difficulty=2, seed=SEED_MAP[trial_count])
+        observation = env.reset(difficulty=2, seed=SEED_MAP[idx-1])
 	OBSERVATIONS.append("reset")
 	REWARDS.append("reset")
 	OBSERVATIONS.append(observation)
