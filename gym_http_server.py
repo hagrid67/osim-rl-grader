@@ -18,6 +18,7 @@ from localsettings import REDIS_HOST, REDIS_PORT
 from localsettings import DEBUG_MODE
 from localsettings import SEED_MAP
 from localsettings import CROWDAI_REPLAY_DATA_VERSION
+from localsettings import SUBMISSION_WINDOW_TTL, MAX_SUBMISSIONS_PER_WINDOW
 
 from crowdai_worker import worker
 
@@ -42,6 +43,47 @@ def hSet(key, field, value):
 def rPush(key, value):
     my_server = redis.Redis(connection_pool=POOL)
     my_server.rpush(key, value)
+
+def generate_ttl_message(ttl):
+    m, s = divmod(ttl, 60)
+    h, m = divmod(m, 60)
+    _response = ""
+    if h > 0:
+        _response += "%d hours " % h
+    if m > 0:
+        _response += "%d minutes " % m
+    if s > 0:
+        _response += "%d seconds " % s
+    return _response
+
+def respectSubmissionLimit(_key):
+    r = redis.Redis(connection_pool=POOL)
+    submission_count = r.get(_key)
+    if submission_count == None:
+        submission_count = 0
+    else:
+        submission_count = int(submission_count)
+
+    ttl = r.ttl(_key)
+    if ttl == None:
+        ttl = SUBMISSION_WINDOW_TTL
+    TTL_MESSAGE = generate_ttl_message(ttl)
+
+    status = False
+    message = ""
+    if submission_count == 0:
+        r.set(_key, 1)
+        r.expire(_key, SUBMISSION_WINDOW_TTL)
+        status = True
+        message = "You have %d submissions left over the next %s " % (MAX_SUBMISSIONS_PER_WINDOW - 1, TTL_MESSAGE)
+    elif submission_count > 0 and submission_count < MAX_SUBMISSIONS_PER_WINDOW:
+        r.incr(_key)
+        status = True
+        message = "You have %d submissions left over the next %s " % (MAX_SUBMISSIONS_PER_WINDOW - 1, TTL_MESSAGE)
+    else:
+        status = False
+        message = "You have already made %d submissions in the last 24 hours. You can make your next submission in %s " % (MAX_SUBMISSIONS_PER_WINDOW, TTL_MESSAGE)
+    return (status, message)
 
 """
     Redis Connection Pool Helpers End
@@ -106,6 +148,10 @@ class Envs(object):
             raise InvalidUsage('Instance_id {} unknown'.format(instance_id))
 
     def create(self, env_id, token):
+        status, message = respectSubmissionLimit("CROWDAI::SUBMISSION_COUNT::%s" % token)
+        if not status:
+            raise InvalidUsage(message)
+
         try:
             osim_envs = {'Run': RunEnv}
             if env_id in osim_envs.keys():
