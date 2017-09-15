@@ -19,12 +19,14 @@ from localsettings import DEBUG_MODE
 from localsettings import SEED_MAP
 from localsettings import CROWDAI_REPLAY_DATA_VERSION
 from localsettings import SUBMISSION_WINDOW_TTL, MAX_SUBMISSIONS_PER_WINDOW
+from localsettings import ENV_TTL, MAX_PARALLEL_ENVS
 
 from crowdai_worker import worker
 
 import redis
 from rq import Queue
 import json
+import time
 
 import logging
 logger = logging.getLogger('werkzeug')
@@ -134,49 +136,81 @@ class Envs(object):
     def __init__(self):
         self.envs = {}
         self.id_len = 8
+        self.env_info = {}
 
     def _lookup_env(self, instance_id):
         try:
             return self.envs[instance_id]
         except KeyError:
-            raise InvalidUsage('Instance_id {} unknown'.format(instance_id))
+            raise InvalidUsage('Instance_id {} unknown or expired.'.format(instance_id))
 
     def _remove_env(self, instance_id):
         try:
             del self.envs[instance_id]
+            del self.env_info[instance_id]
         except KeyError:
-            raise InvalidUsage('Instance_id {} unknown'.format(instance_id))
+            raise InvalidUsage('Instance_id {} unknown or expired.'.format(instance_id))
+
+    def _update_env_info(self, instance_id, key, value):
+        if instance_id not in self.env_info.keys():
+            self.env_info[instance_id] = {}
+
+        self.env_info[instance_id][key] = value
+
+    def _env_housekeeping(self, token=False):
+        for instance_id in self.env_info.keys():
+            # Clean up all envs which have lives past their TTL
+            if time.time() - self.env_info[instance_id]['create_time'] > ENV_TTL:
+                self._remove_env(instance_id)
+            else:
+                # If a user token is provided, clean up all envs belonging to the user token
+                if token and self.env_info[instance_id]['user_token'] == token:
+                    self._remove_env(instance_id)
+    def can_create_env(self, token):
+        # Clean up expired Envs, and all (previous) envs belonging to the current user
+        self._env_housekeeping(token)
+
+        if len(self.env_info.keys()) <= MAX_PARALLEL_ENVS:
+            return True
+        else:
+            return False
 
     def create(self, env_id, token):
-        status, message = respectSubmissionLimit("CROWDAI::SUBMISSION_COUNT::%s" % token)
-        if not status:
-            raise InvalidUsage(message)
+        if self.can_create_env(token):
+            status, message = respectSubmissionLimit("CROWDAI::SUBMISSION_COUNT::%s" % token)
+            if not status:
+                raise InvalidUsage(message)
 
-        try:
-            osim_envs = {'Run': RunEnv}
-            if env_id in osim_envs.keys():
-                env = osim_envs[env_id](visualize=False)
-            else:
+            try:
+                osim_envs = {'Run': RunEnv}
+                if env_id in osim_envs.keys():
+                    env = osim_envs[env_id](visualize=False)
+                else:
+                    raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
+
+            except gym.error.Error:
                 raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
 
-        except gym.error.Error:
-            raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
+            instance_id = token + "___" + str(uuid.uuid4().hex)[:10]
+            # TODO: that's an ugly way to control the program...
+            try:
+                self.env_close(instance_id)
+            except:
+                pass
+            self.envs[instance_id] = env
 
-        instance_id = token + "___" + str(uuid.uuid4().hex)[:10]
-        # TODO: that's an ugly way to control the program...
-        try:
-            self.env_close(instance_id)
-        except:
-            pass
-        self.envs[instance_id] = env
+            self._update_env_info(instance_id, "user_token", token)
+            self._update_env_info(instance_id, "create_time", time.time())
 
-        # Start the relevant data-queues for actions, observations and rewards
-        # for the said instance id
-        rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "start")
-        rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "start")
-        rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "start")
+            # Start the relevant data-queues for actions, observations and rewards
+            # for the said instance id
+            rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "start")
+            rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "start")
+            rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "start")
 
-        return instance_id
+            return instance_id
+        else:
+            raise InvalidUsage("We are running at full capacity at the moment. Please try again in a few minutes.")
 
     def list_all(self):
         return dict([(instance_id, env.spec.id) for (instance_id, env) in self.envs.items()])
@@ -202,7 +236,7 @@ class Envs(object):
             nice_action = np.array(action)
         if render:
             env.render()
-         
+
         serialized_action = repr(nice_action.tolist())
         rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), serialized_action)
         deserialized_action = np.array(eval(serialized_action))
@@ -310,6 +344,7 @@ class Envs(object):
 
 ########## App setup ##########
 app = Flask(__name__)
+app.debug = True
 envs = Envs()
 
 ########## Error handling ##########
@@ -364,6 +399,12 @@ def patch_send():
 
 #patch_send()
 
+def create_env_after_validation(envs, env_id, user_token):
+    instance_id = envs.create(env_id, user_token)
+    response = jsonify(instance_id=instance_id)
+    response.status_code = 200
+    return response
+
 ########## API route definitions ##########
 @app.route('/v1/envs/', methods=['POST'])
 def env_create():
@@ -382,24 +423,23 @@ def env_create():
     token = get_required_param(request.get_json(), 'token')
     version = get_required_param(request.get_json(), 'version')
 
-    instance_id = envs.create(env_id, token)
-
+    # Validate client version
     if version != pkg_resources.get_distribution("osim-rl").version:
         response = jsonify(message = "Wrong version. Please update to the new version. Read more on https://github.com/stanfordnmbl/osim-rl/docs")
         response.status_code = 400
         return response
 
-    if DEBUG_MODE:
-        response = jsonify(instance_id=instance_id)
-        response.status_code = 200
-        return response
-
+    # Validate API Key
     headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
     r = requests.get(CROWDAI_URL + token, headers=headers)
-    response = jsonify(instance_id = instance_id)
-    response.status_code = r.status_code
 
-    return response
+    if r.status_code == 200:
+        response = create_env_after_validation(envs, env_id, token)
+        return response
+    else:
+        response = jsonify(message = "Unable to authenticate API Key.")
+        response.status_code = 400
+        return response
 
 #@app.route('/v1/envs/', methods=['GET'])
 def env_list_all():
