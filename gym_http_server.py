@@ -157,30 +157,29 @@ class Envs(object):
 
         self.env_info[instance_id][key] = value
 
-    def _env_housekeeping(self, token=False):
+    def _env_housekeeping(self, participant_id=False):
         for instance_id in self.env_info.keys():
             # Clean up all envs which have lives past their TTL
             if time.time() - self.env_info[instance_id]['create_time'] > ENV_TTL:
                 self._remove_env(instance_id)
             else:
-                # If a user token is provided, clean up all envs belonging to the user token
-                if token and self.env_info[instance_id]['user_token'] == token:
+                # If a user token is provided, clean up all envs belonging to the user token (participant_id)
+                if participant_id and self.env_info[instance_id]['user_token'] == participant_id:
                     self._remove_env(instance_id)
-    def can_create_env(self, token):
+    def can_create_env(self, participant_id):
         # Clean up expired Envs, and all (previous) envs belonging to the current user
-        self._env_housekeeping(token)
+        self._env_housekeeping(participant_id)
 
         if len(self.env_info.keys()) <= MAX_PARALLEL_ENVS:
             return True
         else:
             return False
 
-    def create(self, env_id, token):
-        if self.can_create_env(token):
-            status, message = respectSubmissionLimit("CROWDAI::SUBMISSION_COUNT::%s" % token)
+    def create(self, env_id, participant_id):
+        if self.can_create_env(participant_id):
+            status, message = respectSubmissionLimit("CROWDAI::SUBMISSION_COUNT::%s" % participant_id)
             if not status:
                 raise InvalidUsage(message)
-
             try:
                 osim_envs = {'Run': RunEnv}
                 if env_id in osim_envs.keys():
@@ -191,7 +190,7 @@ class Envs(object):
             except gym.error.Error:
                 raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
 
-            instance_id = token + "___" + str(uuid.uuid4().hex)[:10]
+            instance_id = participant_id + "___" + str(uuid.uuid4().hex)[:10]
             # TODO: that's an ugly way to control the program...
             try:
                 self.env_close(instance_id)
@@ -199,7 +198,7 @@ class Envs(object):
                 pass
             self.envs[instance_id] = env
 
-            self._update_env_info(instance_id, "user_token", token)
+            self._update_env_info(instance_id, "user_token", participant_id)
             self._update_env_info(instance_id, "create_time", time.time())
 
             # Start the relevant data-queues for actions, observations and rewards
@@ -399,8 +398,8 @@ def patch_send():
 
 #patch_send()
 
-def create_env_after_validation(envs, env_id, user_token):
-    instance_id = envs.create(env_id, user_token)
+def create_env_after_validation(envs, env_id, participant_id):
+    instance_id = envs.create(env_id, participant_id)
     response = jsonify(instance_id=instance_id)
     response.status_code = 200
     return response
@@ -434,7 +433,9 @@ def env_create():
     r = requests.get(CROWDAI_URL + token, headers=headers)
 
     if r.status_code == 200:
-        response = create_env_after_validation(envs, env_id, token)
+        payload = json.loads(r.text)
+        participant_id = str(payload['participant_id'])
+        response = create_env_after_validation(envs, env_id, participant_id)
         return response
     else:
         response = jsonify(message = "Unable to authenticate API Key.")
