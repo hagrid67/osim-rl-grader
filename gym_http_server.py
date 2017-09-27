@@ -42,6 +42,10 @@ def hSet(key, field, value):
     my_server = redis.Redis(connection_pool=POOL)
     my_server.hset(key, field, value)
 
+def hGet(key, field):
+    my_server = redis.Redis(connection_pool=POOL)
+    return my_server.hget(key, field)
+
 def rPush(key, value):
     my_server = redis.Redis(connection_pool=POOL)
     my_server.rpush(key, value)
@@ -320,7 +324,8 @@ class Envs(object):
 
         if not DEBUG_MODE:
             headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
-            r = requests.post(CROWDAI_URL + "?api_key=%s&challenge_id=%d&score=%f&grading_status=graded" % (instance_id.split("___")[0], CROWDAI_CHALLENGE_ID, SCORE), headers=headers)
+            api_key = hGet("CROWDAI::API_KEY_MAP", instance_id.split("___")[0] )
+            r = requests.post(CROWDAI_URL + "?api_key=%s&challenge_id=%d&score=%f&grading_status=graded" % (api_key, CROWDAI_CHALLENGE_ID, SCORE), headers=headers)
             if r.status_code != 202:
                 return None
             else:
@@ -435,6 +440,7 @@ def env_create():
     if r.status_code == 200:
         payload = json.loads(r.text)
         participant_id = str(payload['participant_id'])
+        hSet("CROWDAI::API_KEY_MAP", participant_id, token)
         response = create_env_after_validation(envs, env_id, participant_id)
         return response
     else:
