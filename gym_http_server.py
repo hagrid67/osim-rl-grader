@@ -424,7 +424,7 @@ def env_create():
         manipulated
     """
     env_id = get_required_param(request.get_json(), 'env_id')
-    api_key = get_required_param(request.get_json(), 'token')
+    api_key = get_required_param(request.get_json(), 'token').strip()
     version = get_required_param(request.get_json(), 'version')
 
     # Validate client version
@@ -437,7 +437,7 @@ def env_create():
     headers = {
         'Accept': 'application/vnd.api+json',
         'Content-Type': 'application/vnd.api+json',
-        'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
+        'Authorization': 'Token token={}'.format(CROWDAI_TOKEN)}
     r = requests.get(CROWDAI_URL + api_key, headers=headers)
 
     if r.status_code == 200:
