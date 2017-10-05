@@ -424,7 +424,7 @@ def env_create():
         manipulated
     """
     env_id = get_required_param(request.get_json(), 'env_id')
-    token = get_required_param(request.get_json(), 'token')
+    api_key = get_required_param(request.get_json(), 'token')
     version = get_required_param(request.get_json(), 'version')
 
     # Validate client version
@@ -434,13 +434,16 @@ def env_create():
         return response
 
     # Validate API Key
-    headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
-    r = requests.get(CROWDAI_URL + token, headers=headers)
+    headers = {
+        'Accept': 'application/vnd.api+json',
+        'Content-Type': 'application/vnd.api+json',
+        'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
+    r = requests.get(CROWDAI_URL + api_key, headers=headers)
 
     if r.status_code == 200:
         payload = json.loads(r.text)
         participant_id = str(payload['participant_id'])
-        hSet("CROWDAI::API_KEY_MAP", participant_id, token)
+        hSet("CROWDAI::API_KEY_MAP", participant_id, api_key)
         response = create_env_after_validation(envs, env_id, participant_id)
         return response
     else:
