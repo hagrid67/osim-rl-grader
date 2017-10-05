@@ -13,7 +13,7 @@ from osim.env import RunEnv
 from gym.wrappers.time_limit import TimeLimit
 from gym import error
 
-from localsettings import CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_ID
+from localsettings import CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_CLIENT_NAME
 from localsettings import REDIS_HOST, REDIS_PORT
 from localsettings import DEBUG_MODE
 from localsettings import SEED_MAP
@@ -323,21 +323,27 @@ class Envs(object):
         print("Submitting to crowdAI.org as Stanford...")
 
         if not DEBUG_MODE:
-            headers = {'Authorization': 'Token token="%s"' % CROWDAI_TOKEN}
             api_key = hGet("CROWDAI::API_KEY_MAP", instance_id.split("___")[0] )
-            r = requests.post(CROWDAI_URL + "?api_key=%s&challenge_id=%d&score=%f&grading_status=graded" % (api_key, CROWDAI_CHALLENGE_ID, SCORE), headers=headers)
-            if r.status_code != 202:
-                return None
+            headers = {
+                'Accept': 'application/vnd.api+json',
+                'Content-Type': 'application/vnd.api+json',
+                'Authorization': 'Token token={}'.format(CROWDAI_TOKEN)
+            }
+            params = {
+                'challenge_client_name': CROWDAI_CHALLENGE_CLIENT_NAME,
+                'api_key' : api_key,
+                'grading_status': 'graded',
+                'score': SCORE
+            }
+            r = requests.post(CROWDAI_URL, headers=headers, params=params)
+            if r.status_code == 202:
+                crowdai_submission_id = json.loads(r.text)["submission_id"]
+                rPush("CROWDAI::SUBMITTED_Q", instance_id)
+                hSet("CROWDAI::INSTANCE_ID_MAP", instance_id, crowdai_submission_id)
+                Q.enqueue(worker, instance_id, timeout=3600)
             else:
-		print r.text
-		crowdai_submission_id = json.loads(r.text)["submission_id"]
-        rPush("CROWDAI::SUBMITTED_Q", instance_id)
-
-
-        if not DEBUG_MODE:
-	    hSet("CROWDAI::INSTANCE_ID_MAP", instance_id, crowdai_submission_id)
-            Q.enqueue(worker, instance_id, timeout=3600)
-        ## TO-DO :: Store instance_id -> submission_id mapping in a hash
+                # Keep a track of the error response
+                print r.text
 
         return SCORE
 

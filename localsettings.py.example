@@ -2,6 +2,7 @@
 
 CROWDAI_URL="API endpoint for the CrowdAI Instance, ex : http://www.crowdai.org/api/external_graders/"
 CROWDAI_CHALLENGE_ID="Challenge ID of the corresponding challenge"
+CROWDAI_CHALLENGE_CLIENT_NAME="nips-2017-learning-to-run"
 CROWDAI_TOKEN="Authentication Token provided by CrowdAI"
 
 CROWDAI_REPLAY_DATA_VERSION=0
