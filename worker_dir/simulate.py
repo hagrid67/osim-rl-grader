@@ -80,6 +80,7 @@ for idx, trial in enumerate(ACTIONS):
 	OBSERVATIONS.append(observation)
 	for _action in trial:
 		observation, reward, done, info = env.step(_action)
+		print observation
 		OBSERVATIONS.append(observation)
 		REWARDS.append(reward)
 		if done:
