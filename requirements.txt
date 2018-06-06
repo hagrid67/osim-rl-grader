@@ -17,4 +17,4 @@ rq==0.7.1
 six==1.10.0
 tinys3==0.1.12
 Werkzeug==0.11.15
--e git+https://github.com/stanfordnmbl/osim-rl@1dca2303574d9483f96f81659e4ce72791858ae4#egg=osim_rl
+-e git+https://github.com/stanfordnmbl/osim-rl#egg=osim_rl
