@@ -13,7 +13,7 @@ import redis
 
 def worker(submission_id):
     submission_id = str(submission_id)
-    print "Processing : ", submission_id
+    print("Processing : " + submission_id)
     COMMAND = ""
     #COMMAND += " DISPLAY="+DISPLAY
     COMMAND += " "+os.getcwd()+"/worker_dir/simulate.py "
@@ -33,13 +33,13 @@ def worker(submission_id):
     while True:
         result = os.system(COMMAND)
         if result != 0:
-	    print "Error in generating and uploading GIF :: ", submission_id
-	    f = open("error.log", "a")
-	    f.write("Error in generating and uploading GIF :: " + submission_id+"\n")
-	    print "Attempting again..."
-	    f.write("Attempting Again.....")## In case of simbody-visualizer crashes, it usually works out in the second try
-	    time.sleep(10)
-	    f.close()
+            print("Error in generating and uploading GIF :: " + submission_id)
+            f = open("error.log", "a")
+            f.write("Error in generating and uploading GIF :: " + submission_id+"\n")
+            print("Attempting again...")
+            f.write("Attempting Again.....")## In case of simbody-visualizer crashes, it usually works out in the second try
+            time.sleep(10)
+            f.close()
             result_count += 1
         else:
             break
@@ -67,21 +67,21 @@ if __name__ == '__main__':
 	else:
 		r = redis.Redis(REDIS_HOST, REDIS_PORT, db=1)
 		instance_id_map = r.hgetall("CROWDAI::INSTANCE_ID_MAP")
-		print "Available Instance IDs for this submission are : "
+		print("Available Instance IDs for this submission are : ")
 		found = False
 		for _key in instance_id_map:
 			if instance_id_map[_key] == _arg:
-				print _key
+				print(_key)
 				found = True
 				
 				if show_action_map:
 					ACTIONS_QUERY = "CROWDAI::SUBMISSION::%s::trial_1_actions" % _key
 					actions = r.lrange(ACTIONS_QUERY, 0, 10000)
-					print actions		
+					print(actions)		
 		if found == False:
-			print "Sorry no instance_ids found for this submission..."
+			print("Sorry no instance_ids found for this submission...")
 		else:
-			print "Please execute again with the instance_id as a parameter"
+			print("Please execute again with the instance_id as a parameter")
 		exit(0)
 
 	# TO-DO: Handle case of one instance_id mapping to multiple submission ids	
@@ -90,5 +90,5 @@ if __name__ == '__main__':
 		submission_id = internal_submission_id
 		worker(submission_id)
 	except:
-		print "Unable to find data for submission id...", internal_submission_id
+		print("Unable to find data for submission id..." + internal_submission_id)
 	#worker(sys.argv[1])	

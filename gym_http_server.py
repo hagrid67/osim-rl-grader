@@ -8,14 +8,14 @@ import argparse
 import sys
 import requests
 import pkg_resources
-from gym.wrappers.monitoring import Monitor #, _Monitor
-from osim.env import RunEnv
+from gym.wrappers.monitor import Monitor
+from osim.env import ProstheticsEnv
 from gym.wrappers.time_limit import TimeLimit
 from gym import error
 
 from localsettings import CROWDAI_TOKEN, CROWDAI_URL, CROWDAI_CHALLENGE_CLIENT_NAME
 from localsettings import REDIS_HOST, REDIS_PORT
-from localsettings import DEBUG_MODE
+from localsettings import DEBUG_MODE, DISABLE_VERIFICATION
 from localsettings import SEED_MAP
 from localsettings import CROWDAI_REPLAY_DATA_VERSION
 from localsettings import SUBMISSION_WINDOW_TTL, MAX_SUBMISSIONS_PER_WINDOW
@@ -101,12 +101,18 @@ class ChallengeMonitor(Monitor):
         super(ChallengeMonitor, self).__init__(*args, **kwargs)
         self.total = 0.0
 
-    def _step(self, *args, **kwargs):
-        observation, reward, done, info = super(ChallengeMonitor, self)._step(*args, **kwargs)
+    def step(self, *args, **kwargs):
+        # TODO: The next line is done manually...
+        # observation, reward, done, info = super(ChallengeMonitor, self).step(*args, **kwargs)
+        
+        self._before_step(args[0])
+        observation, reward, done, info = self.env.step(args[0], project = False)
+        done = self._after_step(observation, reward, done, info)
+
         self.total = self.total + reward
         return observation, reward, done, info
 
-    def _reset(self, *args, **kwargs):
+    def reset(self, *args, **kwargs):
         self._before_reset()
         observation = self.env.reset(*args, **kwargs)
         self._after_reset(observation)
@@ -185,7 +191,7 @@ class Envs(object):
             if not status:
                 raise InvalidUsage(message)
             try:
-                osim_envs = {'Run': RunEnv}
+                osim_envs = {'Run': ProstheticsEnv}
                 if env_id in osim_envs.keys():
                     env = osim_envs[env_id](visualize=False)
                 else:
@@ -220,7 +226,7 @@ class Envs(object):
 
     def reset(self, instance_id):
         env = self._lookup_env(instance_id)
-        obs = env._reset(difficulty=2, seed=SEED_MAP[env.trial-1])
+        obs = env.reset(project = False) #difficulty=2, seed=SEED_MAP[env.trial-1])
         env.trial += 1
         if env.trial == len(SEED_MAP)+1:
             obs = None
@@ -398,14 +404,14 @@ def handle_invalid_usage(error):
     response.status_code = error.status_code
     return response
 
-import httplib
+import http
 
 def patch_send():
-    old_send= httplib.HTTPConnection.send
+    old_send= http.client.HTTPConnection.send
     def new_send( self, data ):
         print(data)
         return old_send(self, data) #return is not necessary, but never hurts, in case the library is changed
-    httplib.HTTPConnection.send= new_send
+    http.client.HTTPConnection.send= new_send
 
 #patch_send()
 
@@ -446,16 +452,19 @@ def env_create():
         'Authorization': 'Token token={}'.format(CROWDAI_TOKEN)}
     r = requests.get(CROWDAI_URL + api_key, headers=headers)
 
-    if r.status_code == 200:
-        payload = json.loads(r.text)
-        participant_id = str(payload['participant_id'])
-        hSet("CROWDAI::API_KEY_MAP", participant_id, api_key)
-        response = create_env_after_validation(envs, env_id, participant_id)
-        return response
-    else:
+    if r.status_code != 200 and not DISABLE_VERIFICATION:
         response = jsonify(message = "Unable to authenticate API Key.")
         response.status_code = 400
         return response
+    if r.status_code == 200:
+        payload = json.loads(r.text)
+        participant_id = str(payload['participant_id'])
+    if DISABLE_VERIFICATION:
+        participant_id = str(0)
+
+    hSet("CROWDAI::API_KEY_MAP", participant_id, api_key)
+    response = create_env_after_validation(envs, env_id, participant_id)
+    return response
 
 #@app.route('/v1/envs/', methods=['GET'])
 def env_list_all():
