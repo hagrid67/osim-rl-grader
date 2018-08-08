@@ -191,7 +191,8 @@ class Envs(object):
             if not status:
                 raise InvalidUsage(message)
             try:
-                osim_envs = {'Run': ProstheticsEnv}
+                osim_envs = {'Run': ProstheticsEnv,
+                "ProstheticsEnv": ProstheticsEnv }
                 if env_id in osim_envs.keys():
                     env = osim_envs[env_id](visualize=False)
                 else:
@@ -317,6 +318,8 @@ class Envs(object):
         rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "close")
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "close")
         rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), "close")
+
+        print("Submission - ", type(CROWDAI_REPLAY_DATA_VERSION), type(instance_id))        
 
         rPush("CROWDAI::SUBMISSION::%s::actions"%(instance_id), "CROWDAI_REPLAY_DATA_VERSION:"+CROWDAI_REPLAY_DATA_VERSION)
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), "CROWDAI_REPLAY_DATA_VERSION:"+CROWDAI_REPLAY_DATA_VERSION)

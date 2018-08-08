@@ -1,0 +1,32 @@
+## Local Settings for the osim-rl-grader
+
+CROWDAI_URL="http://localhost:8050/api/external_graders/"
+CROWDAI_CHALLENGE_ID="ProstheticsEnv"
+CROWDAI_CHALLENGE_CLIENT_NAME="nips-2017-learning-to-run"
+CROWDAI_TOKEN="50fb66bb6e5f4fdac76d1cb68a5b9038"
+
+CROWDAI_REPLAY_DATA_VERSION="0"
+
+REDIS_HOST="127.0.0.1"
+REDIS_PORT=6379
+#DISPLAY=":100"
+DISPLAY=":0.0"
+
+S3_ACCESS_KEY="ACCESS_ID_FOR_AWS_USER"
+S3_SECRET_KEY="SECRET_KEY_FOR_AWS_USER"
+S3_BUCKET="Bucket Name where the GIFs will be uploaded to"
+
+DEBUG_MODE=True
+DISABLE_VERIFICATION=DEBUG_MODE
+
+SEED_MAP = [
+  123, 456, 789
+]
+
+RENDER_LOGO=0
+
+SUBMISSION_WINDOW_TTL = 86400 # 24 hours * 60 minutes * 60 seconds
+MAX_SUBMISSIONS_PER_WINDOW = 999
+
+ENV_TTL = 20*60 # 20 minutes * 60 seconds
+MAX_PARALLEL_ENVS = 3

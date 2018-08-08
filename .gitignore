@@ -4,7 +4,7 @@
 *.py~
 .DS_Store
 *~
-localsettings.py
+#localsettings.py
 
 # Setuptools distribution and build folders.
 /dist/
