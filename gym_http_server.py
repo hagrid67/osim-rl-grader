@@ -114,6 +114,7 @@ class ChallengeMonitor(Monitor):
 
     def reset(self, *args, **kwargs):
         self._before_reset()
+        print("ChallengeMonitor Reset env:", type(self.env))
         observation = self.env.reset(*args, **kwargs)
         self._after_reset(observation)
         print("Points so far: %f" % self.total)
@@ -150,6 +151,7 @@ class Envs(object):
 
     def _lookup_env(self, instance_id):
         try:
+            print ("lookup:", instance_id, self.envs)
             return self.envs[instance_id]
         except KeyError:
             raise InvalidUsage('Instance_id {} unknown or expired.'.format(instance_id))
@@ -194,7 +196,7 @@ class Envs(object):
                 osim_envs = {'Run': ProstheticsEnv,
                 "ProstheticsEnv": ProstheticsEnv }
                 if env_id in osim_envs.keys():
-                    env = osim_envs[env_id](visualize=False, difficulty=1) # jw added difficulty 1
+                    env = osim_envs[env_id](visualize=True, difficulty=1) # jw added difficulty 1
                 else:
                     raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
 
@@ -227,7 +229,9 @@ class Envs(object):
 
     def reset(self, instance_id):
         env = self._lookup_env(instance_id)
-        obs = env.reset(project = False) #difficulty=2, seed=SEED_MAP[env.trial-1])
+        #obs = env.reset(project = False) #difficulty=2, seed=SEED_MAP[env.trial-1])
+        #obs = env.reset(project = False, difficulty=1, seed=SEED_MAP[env.trial-1]) # jw restored...
+        obs = env.reset(project = False) #, seed=SEED_MAP[env.trial-1]) # removed difficulty, seed
         env.trial += 1
         if env.trial == len(SEED_MAP)+1:
             obs = None
@@ -252,7 +256,10 @@ class Envs(object):
         deserialized_action = np.array(eval(serialized_action))
 
         [observation, reward, done, info] = env.step(deserialized_action)
+        print("obs: ", type(observation), len(observation), observation.keys())
+        print("pelvis vel:", observation["body_vel"]["pelvis"])
         obs_jsonable = env.observation_space.to_jsonable(observation)
+        print("pelvis vel 2:", obs_jsonable["body_vel"]["pelvis"])
 
         rPush("CROWDAI::SUBMISSION::%s::observations"%(instance_id), repr(obs_jsonable))
         rPush("CROWDAI::SUBMISSION::%s::rewards"%(instance_id), repr(reward))
@@ -513,10 +520,15 @@ def env_step(instance_id):
         - done: whether the episode has ended
         - info: a dict containing auxiliary diagnostic information
     """
-    json = request.get_json()
-    action = get_required_param(json, 'action')
-    render = get_optional_param(json, 'render', False)
+    jReq = request.get_json()
+    action = get_required_param(jReq, 'action')
+    render = get_optional_param(jReq, 'render', False)
     [obs_jsonable, reward, done, info] = envs.step(instance_id, action, render)
+
+    #with open("dObsServ.txt", "a") as fOut:
+    #    json.dump(obs_jsonable, fOut)
+    #    fOut.write("\n")
+
     return jsonify(observation = obs_jsonable,
                     reward = reward, done = done, info = info)
 
