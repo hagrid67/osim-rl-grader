@@ -196,7 +196,11 @@ class Envs(object):
                 osim_envs = {'Run': ProstheticsEnv,
                 "ProstheticsEnv": ProstheticsEnv }
                 if env_id in osim_envs.keys():
-                    env = osim_envs[env_id](visualize=True, difficulty=1) # jw added difficulty 1
+                    env = osim_envs[env_id](
+                        visualize=True, 
+                        difficulty=1,               # jw added difficulty 1
+                        integrator_accuracy=0.001,  # jw Oct 15th
+                        ) 
                 else:
                     raise InvalidUsage("Attempted to look up malformed environment ID '{}'".format(env_id))
 
